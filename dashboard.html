@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OutreachOS — Client Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garant:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #090807;
+      --bg-soft:   #0d0c0a;
+      --bg-card:   #111009;
+      --bg-hover:  #181613;
+      --gold:      #c9a96e;
+      --gold-lt:   #e2c99a;
+      --gold-dim:  rgba(201,169,110,0.1);
+      --cream:     #ece7de;
+      --muted:     #524e49;
+      --muted-lt:  #807a73;
+      --border:    #1c1a17;
+      --border-lt: #2a2720;
+      --green:     #4ade80;  --green-dim: rgba(74,222,128,0.1);
+      --blue:      #60a5fa;  --blue-dim:  rgba(96,165,250,0.1);
+      --purple:    #a78bfa;  --purple-dim:rgba(167,139,250,0.1);
+      --amber:     #fbbf24;  --amber-dim: rgba(251,191,36,0.1);
+      --red:       #f87171;  --red-dim:   rgba(248,113,113,0.1);
+      --sidebar-w: 232px;
+      --header-h:  58px;
+      --ease:      cubic-bezier(0.76, 0, 0.24, 1);
+    }
+    html { font-size: 15px; }
+    body { background: var(--bg); color: var(--cream); font-family: 'Inter', sans-serif; font-weight: 300; min-height: 100vh; display: flex; overflow-x: hidden; }
+
+    /* Grain */
+    body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); opacity:0.02; pointer-events:none; z-index:9000; }
+
+    /* ── Layout ── */
+    .sidebar { width:var(--sidebar-w); flex-shrink:0; background:var(--bg-soft); border-right:1px solid var(--border); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; overflow-y:auto; }
+    .main { margin-left:var(--sidebar-w); flex:1; display:flex; flex-direction:column; min-height:100vh; }
+    .topbar { height:var(--header-h); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 1.8rem; background:var(--bg-soft); position:sticky; top:0; z-index:50; flex-shrink:0; }
+    .content { padding:2rem; flex:1; }
+
+    /* ── Sidebar ── */
+    .sidebar-brand { padding:1.2rem 1.4rem; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:0.65rem; }
+    .brand-mark { width:26px; height:26px; background:var(--gold); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .brand-mark svg { width:13px; height:13px; stroke:#090807; fill:none; stroke-width:2; stroke-linecap:round; }
+    .brand-name { font-size:0.82rem; font-weight:500; letter-spacing:0.14em; text-transform:uppercase; color:var(--cream); }
+    .brand-name em { color:var(--gold); font-style:normal; }
+
+    .sidebar-group { padding:0.25rem 0; border-bottom:1px solid var(--border); }
+    .sidebar-group:last-of-type { border-bottom:none; flex:1; }
+    .sidebar-label { font-size:0.58rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); padding:0.9rem 1.4rem 0.3rem; }
+    .sidebar-link {
+      display:flex; align-items:center; gap:0.6rem;
+      padding:0.48rem 1.4rem;
+      font-size:0.78rem; color:var(--muted-lt); text-decoration:none;
+      transition:color 0.2s, background 0.2s; position:relative; cursor:pointer;
+    }
+    .sidebar-link svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; opacity:0.7; transition:opacity 0.2s; }
+    .sidebar-link:hover { color:var(--cream); background:var(--bg-card); }
+    .sidebar-link:hover svg { opacity:1; }
+    .sidebar-link.active { color:var(--gold); background:var(--gold-dim); }
+    .sidebar-link.active svg { opacity:1; }
+    .sidebar-link.active::before { content:''; position:absolute; left:0; top:20%; bottom:20%; width:2px; background:var(--gold); border-radius:0 2px 2px 0; }
+    .sidebar-badge { margin-left:auto; font-size:0.58rem; font-weight:500; background:var(--gold); color:var(--bg); padding:0.1rem 0.38rem; border-radius:99px; }
+
+    .sidebar-bottom { padding:1rem 1.4rem; border-top:1px solid var(--border); margin-top:auto; }
+    .sidebar-user { display:flex; align-items:center; gap:0.65rem; }
+    .user-avatar { width:30px; height:30px; border-radius:50%; background:var(--gold-dim); border:1px solid var(--border-lt); display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:500; color:var(--gold); flex-shrink:0; }
+    .user-name { font-size:0.75rem; color:var(--cream); }
+    .user-role { font-size:0.62rem; color:var(--muted); margin-top:0.05rem; }
+
+    /* ── Topbar ── */
+    .topbar-left { display:flex; align-items:center; gap:0.4rem; }
+    .page-title { font-size:0.82rem; font-weight:500; color:var(--cream); }
+    .page-crumb { font-size:0.72rem; color:var(--muted); }
+    .crumb-sep { color:var(--muted); font-size:0.7rem; }
+    .topbar-right { display:flex; align-items:center; gap:0.9rem; }
+    .live-badge { display:inline-flex; align-items:center; gap:0.35rem; font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--green); }
+    .live-dot { width:5px; height:5px; background:var(--green); border-radius:50%; animation:lp 2s ease infinite; }
+    @keyframes lp { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+    .tb-select { background:var(--bg-card); border:1px solid var(--border-lt); color:var(--muted-lt); font-family:'Inter',sans-serif; font-size:0.7rem; padding:0.3rem 0.7rem; appearance:none; cursor:pointer; transition:border-color 0.2s; }
+    .tb-select:focus { outline:none; border-color:var(--gold); }
+    .tb-btn { display:flex; align-items:center; gap:0.35rem; font-size:0.68rem; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:var(--bg); background:var(--gold); border:none; padding:0.4rem 0.9rem; cursor:pointer; transition:background 0.2s; }
+    .tb-btn:hover { background:var(--gold-lt); }
+    .tb-btn svg, .tb-icon-btn svg { width:11px; height:11px; stroke:currentColor; fill:none; stroke-width:2; }
+    .tb-icon-btn { width:30px; height:30px; display:flex; align-items:center; justify-content:center; background:var(--bg-card); border:1px solid var(--border); cursor:pointer; position:relative; transition:border-color 0.2s; }
+    .tb-icon-btn:hover { border-color:var(--border-lt); }
+    .tb-icon-btn svg { width:13px; height:13px; stroke:var(--muted-lt); fill:none; stroke-width:1.5; }
+    .notif-dot { position:absolute; top:5px; right:5px; width:5px; height:5px; background:var(--gold); border-radius:50%; }
+
+    /* ── Shared panel parts ── */
+    .panel-hd { display:flex; align-items:center; justify-content:space-between; padding:0.9rem 1.3rem; border-bottom:1px solid var(--border); }
+    .panel-title { font-size:0.78rem; font-weight:500; color:var(--cream); }
+    .panel-sub { font-size:0.63rem; color:var(--muted); margin-top:0.1rem; }
+    .panel-act { font-size:0.62rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--gold); cursor:pointer; background:none; border:none; transition:color 0.2s; }
+    .panel-act:hover { color:var(--gold-lt); }
+    .card { background:var(--bg-card); border:1px solid var(--border); }
+
+    /* ── Section tag (shared) ── */
+    .view-header { margin-bottom:1.5rem; }
+    .view-title { font-family:'Cormorant Garant',serif; font-size:2rem; font-weight:400; color:var(--cream); margin-bottom:0.25rem; }
+    .view-title em { font-style:italic; color:var(--gold); }
+    .view-sub { font-size:0.78rem; color:var(--muted-lt); }
+
+    /* ── View wrappers ── */
+    .view { display:none; animation:fadeV 0.4s cubic-bezier(0.16,1,0.3,1); }
+    .view.active { display:block; }
+    @keyframes fadeV { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+
+    /* ── KPI grid ── */
+    .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); margin-bottom:1.5rem; }
+    .kpi-card { background:var(--bg-card); padding:1.2rem 1.4rem; display:flex; flex-direction:column; gap:0.7rem; transition:background 0.2s; }
+    .kpi-card:hover { background:var(--bg-hover); }
+    .kpi-top { display:flex; align-items:flex-start; justify-content:space-between; }
+    .kpi-label { font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
+    .kpi-icon { width:26px; height:26px; display:flex; align-items:center; justify-content:center; border-radius:3px; }
+    .kpi-icon svg { width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:1.5; }
+    .ic-gold { background:var(--gold-dim); color:var(--gold); }
+    .ic-green { background:var(--green-dim); color:var(--green); }
+    .ic-blue { background:var(--blue-dim); color:var(--blue); }
+    .ic-purple { background:var(--purple-dim); color:var(--purple); }
+    .ic-amber { background:var(--amber-dim); color:var(--amber); }
+    .kpi-num { font-family:'Cormorant Garant',serif; font-size:2.2rem; line-height:1; color:var(--cream); }
+    .kpi-num em { color:var(--gold); font-style:normal; font-size:0.72em; }
+    .kpi-foot { display:flex; align-items:center; gap:0.45rem; }
+    .badge-up   { display:inline-flex; align-items:center; gap:0.2rem; font-size:0.65rem; font-weight:500; padding:0.12rem 0.38rem; border-radius:99px; background:var(--green-dim); color:var(--green); }
+    .badge-down { display:inline-flex; align-items:center; gap:0.2rem; font-size:0.65rem; font-weight:500; padding:0.12rem 0.38rem; border-radius:99px; background:var(--red-dim); color:var(--red); }
+    .badge-up svg,.badge-down svg { width:9px; height:9px; stroke:currentColor; fill:none; stroke-width:2.5; }
+    .kpi-period { font-size:0.62rem; color:var(--muted); }
+
+    /* ── Two-col ── */
+    .two-col { display:grid; grid-template-columns:1fr 340px; gap:1px; background:var(--border); margin-bottom:1.5rem; }
+    .two-col .card { background:var(--bg-card); border:none; }
+
+    /* ── Chart ── */
+    .chart-wrap { padding:1rem 1.3rem; }
+    .chart-legend { display:flex; gap:1.2rem; margin-bottom:1rem; }
+    .leg { display:flex; align-items:center; gap:0.35rem; font-size:0.62rem; color:var(--muted-lt); }
+    .leg-dot { width:6px; height:6px; border-radius:50%; }
+    .chart-bars { display:grid; grid-template-columns:repeat(8,1fr); gap:0.4rem; align-items:end; height:120px; }
+    .bar-grp { display:flex; gap:2px; align-items:end; height:100%; }
+    .bar { flex:1; border-radius:1px 1px 0 0; cursor:default; }
+    .bar-gold { background:var(--gold); }
+    .bar-muted { background:var(--border-lt); }
+    .bar-green { background:var(--green); opacity:0.75; }
+    .chart-xlabels { display:grid; grid-template-columns:repeat(8,1fr); gap:0.4rem; margin-top:0.4rem; }
+    .xlabel { font-size:0.56rem; color:var(--muted); text-align:center; }
+    .spark-wrap { padding:0.4rem 1.3rem; }
+    .spark-row { display:flex; align-items:center; justify-content:space-between; padding:0.55rem 0; border-bottom:1px solid var(--border); }
+    .spark-row:last-child { border-bottom:none; }
+    .spark-lbl { font-size:0.7rem; color:var(--muted-lt); min-width:120px; }
+    .spark-svg { flex:1; height:22px; margin:0 0.8rem; }
+    .spark-val { font-size:0.75rem; font-weight:500; color:var(--cream); text-align:right; min-width:36px; }
+    .spark-chg { font-size:0.6rem; text-align:right; margin-top:0.05rem; }
+    .chg-up { color:var(--green); } .chg-dn { color:var(--red); }
+
+    /* ── Activity feed ── */
+    .act-item { display:grid; grid-template-columns:22px 1fr auto; gap:0.6rem; align-items:start; padding:0.75rem 1.3rem; border-bottom:1px solid var(--border); transition:background 0.15s; }
+    .act-item:last-child { border-bottom:none; }
+    .act-item:hover { background:var(--bg-hover); }
+    .act-dot-col { display:flex; justify-content:center; padding-top:4px; }
+    .act-dot { width:7px; height:7px; border-radius:50%; }
+    .act-title { font-size:0.75rem; color:var(--cream); line-height:1.4; }
+    .act-title strong { font-weight:500; }
+    .act-detail { font-size:0.62rem; color:var(--muted); margin-top:0.15rem; }
+    .act-time { font-size:0.6rem; color:var(--muted); white-space:nowrap; padding-top:2px; }
+
+    /* ── Pipeline board ── */
+    .pipeline-board { display:grid; grid-template-columns:repeat(5,1fr); gap:1px; background:var(--border); margin-bottom:1.5rem; }
+    .pipe-col { background:var(--bg-card); }
+    .pipe-col-head { padding:0.75rem 0.9rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .pipe-col-name { font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted-lt); }
+    .pipe-count { font-size:0.6rem; font-weight:500; padding:0.1rem 0.38rem; border-radius:99px; background:var(--border-lt); color:var(--muted-lt); }
+    .pipe-cards { padding:0.5rem; display:flex; flex-direction:column; gap:0.4rem; min-height:180px; }
+    .pcard { background:var(--bg-hover); border:1px solid var(--border); padding:0.65rem 0.75rem; transition:border-color 0.2s; cursor:default; }
+    .pcard:hover { border-color:var(--border-lt); }
+    .pcard-name { font-size:0.72rem; color:var(--cream); margin-bottom:0.15rem; font-weight:400; }
+    .pcard-co { font-size:0.62rem; color:var(--muted); margin-bottom:0.45rem; }
+    .pcard-tags { display:flex; gap:0.25rem; flex-wrap:wrap; }
+    .ptag { font-size:0.56rem; padding:0.1rem 0.32rem; border-radius:99px; border:1px solid var(--border-lt); color:var(--muted); }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; }
+    thead tr { border-bottom:1px solid var(--border); }
+    th { font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-weight:400; padding:0.65rem 1rem; text-align:left; white-space:nowrap; }
+    tbody tr { border-bottom:1px solid var(--border); transition:background 0.15s; }
+    tbody tr:last-child { border-bottom:none; }
+    tbody tr:hover { background:var(--bg-hover); }
+    td { padding:0.7rem 1rem; font-size:0.76rem; color:var(--cream); vertical-align:middle; }
+    .td-sub { font-size:0.62rem; color:var(--muted); margin-top:0.08rem; }
+    .pill { display:inline-flex; align-items:center; gap:0.28rem; font-size:0.6rem; font-weight:500; padding:0.18rem 0.5rem; border-radius:99px; white-space:nowrap; }
+    .pill::before { content:''; width:4px; height:4px; border-radius:50%; background:currentColor; }
+    .pill-booked  { background:var(--green-dim);  color:var(--green); }
+    .pill-qual    { background:var(--gold-dim);   color:var(--gold); }
+    .pill-reach   { background:var(--blue-dim);   color:var(--blue); }
+    .pill-id      { background:var(--purple-dim); color:var(--purple); }
+    .pill-cold    { background:var(--border-lt);  color:var(--muted-lt); }
+    .pill-active  { background:var(--green-dim);  color:var(--green); }
+    .pill-paused  { background:var(--amber-dim);  color:var(--amber); }
+    .score-bar { display:flex; align-items:center; gap:0.4rem; }
+    .score-track { flex:1; height:3px; background:var(--border-lt); border-radius:99px; overflow:hidden; }
+    .score-fill { height:100%; background:var(--gold); border-radius:99px; }
+    .score-n { font-size:0.62rem; color:var(--muted-lt); min-width:1.5rem; text-align:right; }
+    .ch-icon { display:inline-flex; align-items:center; gap:0.22rem; font-size:0.63rem; color:var(--muted); }
+    .ch-icon svg { width:10px; height:10px; stroke:currentColor; fill:none; stroke-width:1.5; }
+
+    /* ── Meetings ── */
+    .meetings-list { display:flex; flex-direction:column; }
+    .meeting-row { display:grid; grid-template-columns:52px 1fr auto; gap:1rem; align-items:center; padding:1rem 1.3rem; border-bottom:1px solid var(--border); transition:background 0.15s; }
+    .meeting-row:last-child { border-bottom:none; }
+    .meeting-row:hover { background:var(--bg-hover); }
+    .meet-date { text-align:center; }
+    .meet-day { font-family:'Cormorant Garant',serif; font-size:1.6rem; line-height:1; color:var(--gold); }
+    .meet-mon { font-size:0.56rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
+    .meet-name { font-size:0.78rem; color:var(--cream); margin-bottom:0.1rem; }
+    .meet-co { font-size:0.63rem; color:var(--muted); margin-bottom:0.2rem; }
+    .meet-badge { display:inline-block; font-size:0.58rem; padding:0.1rem 0.38rem; border-radius:99px; }
+    .mb-conf { background:var(--green-dim); color:var(--green); }
+    .mb-pend { background:var(--amber-dim); color:var(--amber); }
+    .meet-right { text-align:right; }
+    .meet-time { font-size:0.72rem; color:var(--cream); }
+    .meet-dur { font-size:0.62rem; color:var(--muted); margin-top:0.1rem; }
+
+    /* ── Campaigns ── */
+    .camp-item { display:grid; grid-template-columns:1fr auto; align-items:center; gap:1rem; padding:1rem 1.3rem; border-bottom:1px solid var(--border); transition:background 0.15s; }
+    .camp-item:last-child { border-bottom:none; }
+    .camp-item:hover { background:var(--bg-hover); }
+    .camp-name { font-size:0.8rem; color:var(--cream); margin-bottom:0.15rem; font-weight:400; }
+    .camp-meta { font-size:0.62rem; color:var(--muted); margin-bottom:0.4rem; }
+    .camp-prog { height:2px; background:var(--border-lt); border-radius:99px; overflow:hidden; }
+    .camp-prog-fill { height:100%; background:var(--gold); border-radius:99px; }
+    .camp-stats { display:flex; gap:1.2rem; align-items:center; }
+    .cst { text-align:right; }
+    .cst-n { font-size:0.88rem; font-weight:500; color:var(--cream); line-height:1; }
+    .cst-l { font-size:0.56rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-top:0.1rem; }
+
+    /* ── Channel stats ── */
+    .chan-stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border); margin-bottom:1.5rem; }
+    .chan-stat { background:var(--bg-card); padding:1.2rem 1.4rem; }
+    .chan-stat-label { font-size:0.62rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:0.5rem; }
+    .chan-stat-num { font-family:'Cormorant Garant',serif; font-size:2rem; color:var(--cream); line-height:1; }
+    .chan-stat-num em { font-style:normal; color:var(--gold); font-size:0.75em; }
+
+    /* ── ICP form ── */
+    .icp-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    .form-group { display:flex; flex-direction:column; gap:0.4rem; }
+    .form-group.full { grid-column:1/-1; }
+    .form-label { font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
+    .form-input, .form-select, .form-textarea {
+      background:var(--bg-hover); border:1px solid var(--border-lt);
+      color:var(--cream); font-family:'Inter',sans-serif; font-size:0.78rem; font-weight:300;
+      padding:0.55rem 0.8rem; transition:border-color 0.2s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { outline:none; border-color:var(--gold); }
+    .form-textarea { resize:vertical; min-height:80px; }
+    .form-select { appearance:none; cursor:pointer; }
+    .form-tags { display:flex; gap:0.4rem; flex-wrap:wrap; margin-top:0.3rem; }
+    .form-tag { font-size:0.65rem; padding:0.2rem 0.55rem; background:var(--gold-dim); color:var(--gold); border-radius:99px; display:flex; align-items:center; gap:0.3rem; cursor:pointer; }
+    .form-tag:hover { background:rgba(201,169,110,0.18); }
+    .form-actions { display:flex; gap:0.7rem; margin-top:1.5rem; }
+    .btn-save { font-size:0.7rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:var(--bg); background:var(--gold); border:none; padding:0.55rem 1.4rem; cursor:pointer; transition:background 0.2s; }
+    .btn-save:hover { background:var(--gold-lt); }
+    .btn-cancel { font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); background:none; border:1px solid var(--border-lt); padding:0.55rem 1.4rem; cursor:pointer; transition:border-color 0.2s,color 0.2s; }
+    .btn-cancel:hover { border-color:var(--muted); color:var(--cream); }
+
+    /* ── Companies House ── */
+    .ch-search { display:flex; gap:0.5rem; margin-bottom:1.5rem; }
+    .ch-input { flex:1; background:var(--bg-card); border:1px solid var(--border-lt); color:var(--cream); font-family:'Inter',sans-serif; font-size:0.78rem; padding:0.6rem 1rem; transition:border-color 0.2s; }
+    .ch-input:focus { outline:none; border-color:var(--gold); }
+    .ch-filters { display:flex; gap:0.5rem; }
+    .ch-filter { background:var(--bg-card); border:1px solid var(--border-lt); color:var(--muted-lt); font-family:'Inter',sans-serif; font-size:0.7rem; padding:0.6rem 0.8rem; appearance:none; cursor:pointer; transition:border-color 0.2s; }
+    .ch-filter:focus { outline:none; border-color:var(--gold); }
+
+    /* ── Reports ── */
+    .reports-grid { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); margin-bottom:1.5rem; }
+    .report-card { background:var(--bg-card); padding:1.4rem; display:flex; flex-direction:column; gap:0.8rem; transition:background 0.2s; cursor:pointer; }
+    .report-card:hover { background:var(--bg-hover); }
+    .report-icon { width:36px; height:36px; background:var(--gold-dim); display:flex; align-items:center; justify-content:center; }
+    .report-icon svg { width:16px; height:16px; stroke:var(--gold); fill:none; stroke-width:1.5; }
+    .report-name { font-size:0.82rem; color:var(--cream); font-weight:400; }
+    .report-desc { font-size:0.7rem; color:var(--muted-lt); line-height:1.6; }
+    .report-meta { display:flex; align-items:center; justify-content:space-between; }
+    .report-date { font-size:0.62rem; color:var(--muted); }
+    .report-dl { font-size:0.62rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width:3px; height:3px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--border-lt); border-radius:99px; }
+
+    @media (max-width:1100px) { .kpi-grid { grid-template-columns:1fr 1fr; } .two-col { grid-template-columns:1fr; } .pipeline-board { grid-template-columns:repeat(3,1fr); } .chan-stats-grid { grid-template-columns:1fr 1fr; } .icp-grid { grid-template-columns:1fr; } .reports-grid { grid-template-columns:1fr; } }
+    @media (max-width:768px)  { .sidebar { transform:translateX(-100%); } .main { margin-left:0; } .content { padding:1rem; } }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ────────────────────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
+    </div>
+    <div class="brand-name">Outreach<em>OS</em></div>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-label">Overview</div>
+    <a class="sidebar-link active" data-view="overview">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a class="sidebar-link" data-view="pipeline">
+      <svg viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 0 0-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 0 1 5.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 0 1 9.288 0M15 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></svg>
+      Pipeline
+      <span class="sidebar-badge">47</span>
+    </a>
+    <a class="sidebar-link" data-view="campaigns">
+      <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+      Campaigns
+    </a>
+    <a class="sidebar-link" data-view="meetings">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Meetings
+    </a>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-label">Channels</div>
+    <a class="sidebar-link" data-view="linkedin">
+      <svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+      LinkedIn
+    </a>
+    <a class="sidebar-link" data-view="email">
+      <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+      Email
+    </a>
+    <a class="sidebar-link" data-view="voice">
+      <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
+      Voice Calls
+    </a>
+    <a class="sidebar-link" data-view="companies-house">
+      <svg viewBox="0 0 24 24"><path d="M3 21h18M4 21V7l8-4 8 4v14M9 21v-5h6v5"/></svg>
+      Companies House
+    </a>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-label">Account</div>
+    <a class="sidebar-link" data-view="icp">
+      <svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      ICP Settings
+    </a>
+    <a class="sidebar-link" data-view="reports">
+      <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      Reports
+    </a>
+    <a class="sidebar-link" href="index.html">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      Back to Site
+    </a>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="sidebar-user">
+      <div class="user-avatar">JW</div>
+      <div>
+        <div class="user-name">James Whitmore</div>
+        <div class="user-role">Managing Director</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── Main ──────────────────────────────────────────────────────────────── -->
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="page-title" id="topbarTitle">Dashboard</span>
+      <span class="crumb-sep">/</span>
+      <span class="page-crumb">Whitmore Advisory Group</span>
+    </div>
+    <div class="topbar-right">
+      <span class="live-badge"><span class="live-dot"></span>Live</span>
+      <select class="tb-select"><option>Last 30 days</option><option>Last 90 days</option><option>This quarter</option><option>All time</option></select>
+      <div class="tb-icon-btn" title="Notifications"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg><div class="notif-dot"></div></div>
+      <button class="tb-btn"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7"/></svg>Export</button>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- ── VIEW: Overview ──────────────────────────────────────────────── -->
+    <div class="view active" id="view-overview">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-label">Qualified Meetings</div><div class="kpi-icon ic-gold"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div></div>
+          <div class="kpi-num">12<em>/mo</em></div>
+          <div class="kpi-foot"><span class="badge-up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+3</span><span class="kpi-period">vs last month</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-label">Pipeline Value</div><div class="kpi-icon ic-green"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
+          <div class="kpi-num">£340<em>k</em></div>
+          <div class="kpi-foot"><span class="badge-up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+22%</span><span class="kpi-period">vs last month</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-label">Outreach Sent</div><div class="kpi-icon ic-blue"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div></div>
+          <div class="kpi-num">847</div>
+          <div class="kpi-foot"><span class="badge-up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+12%</span><span class="kpi-period">vs last month</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-label">Response Rate</div><div class="kpi-icon ic-purple"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div></div>
+          <div class="kpi-num">18<em>%</em></div>
+          <div class="kpi-foot"><span class="badge-down"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>-2%</span><span class="kpi-period">vs last month</span></div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="panel-hd"><div><div class="panel-title">Outreach Performance</div><div class="panel-sub">Emails, LinkedIn &amp; voice — last 8 weeks</div></div><button class="panel-act">Detail</button></div>
+          <div class="chart-wrap">
+            <div class="chart-legend">
+              <div class="leg"><div class="leg-dot" style="background:var(--gold)"></div>Email</div>
+              <div class="leg"><div class="leg-dot" style="background:var(--border-lt)"></div>LinkedIn</div>
+              <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>Meetings</div>
+            </div>
+            <div class="chart-bars" id="chartBars"></div>
+            <div class="chart-xlabels" id="chartLabels"></div>
+          </div>
+          <div style="border-top:1px solid var(--border)">
+            <div class="spark-wrap">
+              <div class="spark-row"><span class="spark-lbl">Email open rate</span><svg class="spark-svg" id="sp1" viewBox="0 0 120 22" preserveAspectRatio="none"></svg><div><div class="spark-val">34%</div><div class="spark-chg chg-up">↑ 4%</div></div></div>
+              <div class="spark-row"><span class="spark-lbl">LinkedIn reply rate</span><svg class="spark-svg" id="sp2" viewBox="0 0 120 22" preserveAspectRatio="none"></svg><div><div class="spark-val">22%</div><div class="spark-chg chg-up">↑ 2%</div></div></div>
+              <div class="spark-row"><span class="spark-lbl">Voice connect rate</span><svg class="spark-svg" id="sp3" viewBox="0 0 120 22" preserveAspectRatio="none"></svg><div><div class="spark-val">61%</div><div class="spark-chg chg-dn">↓ 1%</div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="border-left:1px solid var(--border)">
+          <div class="panel-hd"><div><div class="panel-title">Live Activity</div><div class="panel-sub">Real-time pipeline events</div></div><span class="live-badge"><span class="live-dot"></span>Live</span></div>
+          <div id="actFeed">
+            <div class="act-item"><div class="act-dot-col"><div class="act-dot" style="background:var(--green)"></div></div><div class="act-text"><div class="act-title"><strong>Sarah Whitfield</strong> booked a meeting</div><div class="act-detail">CFO · Meridian Capital · via LinkedIn</div></div><div class="act-time">2m ago</div></div>
+            <div class="act-item"><div class="act-dot-col"><div class="act-dot" style="background:var(--gold)"></div></div><div class="act-text"><div class="act-title"><strong>James Ashton</strong> qualified by AI voice</div><div class="act-detail">MD · Thornton Advisory · Budget confirmed</div></div><div class="act-time">18m ago</div></div>
+            <div class="act-item"><div class="act-dot-col"><div class="act-dot" style="background:var(--blue)"></div></div><div class="act-text"><div class="act-title">Email sequence started for <strong>Rachel Lowe</strong></div><div class="act-detail">CEO · Farrow &amp; Lowe Ltd · Sequence A</div></div><div class="act-time">41m ago</div></div>
+            <div class="act-item"><div class="act-dot-col"><div class="act-dot" style="background:var(--purple)"></div></div><div class="act-text"><div class="act-title"><strong>23 new leads</strong> scraped from LinkedIn</div><div class="act-detail">CFO/MD · Financial Services · London</div></div><div class="act-time">1h ago</div></div>
+            <div class="act-item"><div class="act-dot-col"><div class="act-dot" style="background:var(--green)"></div></div><div class="act-text"><div class="act-title"><strong>Oliver Barnes</strong> replied to email</div><div class="act-detail">Director · Crestwood Partners · Positive</div></div><div class="act-time">2h ago</div></div>
+            <div class="act-item"><div class="act-dot-col"><div class="act-dot" style="background:var(--gold)"></div></div><div class="act-text"><div class="act-title"><strong>14 companies</strong> from Companies House</div><div class="act-detail">Revenue £2M–£20M · Professional Services</div></div><div class="act-time">3h ago</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick pipeline summary on overview -->
+      <div class="card" style="margin-bottom:1.5rem">
+        <div class="panel-hd"><div><div class="panel-title">Pipeline Snapshot</div><div class="panel-sub">47 active prospects</div></div><button class="panel-act" onclick="navigate('pipeline')">Full Pipeline →</button></div>
+        <div class="pipeline-board" style="margin:0">
+          <div class="pipe-col"><div class="pipe-col-head"><span class="pipe-col-name">Identified</span><span class="pipe-count">14</span></div><div class="pipe-cards"><div class="pcard"><div class="pcard-name">Thomas Clarke</div><div class="pcard-co">Partner · Clarke &amp; Assoc.</div><div class="pcard-tags"><span class="ptag">LI</span></div></div><div class="pcard"><div class="pcard-name">Priya Mehta</div><div class="pcard-co">CFO · NovaBridge Capital</div><div class="pcard-tags"><span class="ptag">CH</span></div></div></div></div>
+          <div class="pipe-col"><div class="pipe-col-head"><span class="pipe-col-name">In Outreach</span><span class="pipe-count" style="background:var(--blue-dim);color:var(--blue)">18</span></div><div class="pipe-cards"><div class="pcard"><div class="pcard-name">Rachel Lowe</div><div class="pcard-co">CEO · Farrow &amp; Lowe</div><div class="pcard-tags"><span class="ptag">Email</span><span class="ptag">Step 2</span></div></div><div class="pcard"><div class="pcard-name">Emma Fletcher</div><div class="pcard-co">MD · Elara Consulting</div><div class="pcard-tags"><span class="ptag">LI</span></div></div></div></div>
+          <div class="pipe-col"><div class="pipe-col-head"><span class="pipe-col-name">Responded</span><span class="pipe-count" style="background:var(--amber-dim);color:var(--amber)">8</span></div><div class="pipe-cards"><div class="pcard"><div class="pcard-name">Oliver Barnes</div><div class="pcard-co">Director · Crestwood</div><div class="pcard-tags"><span class="ptag">Positive</span></div></div></div></div>
+          <div class="pipe-col"><div class="pipe-col-head"><span class="pipe-col-name">Qualified</span><span class="pipe-count" style="background:var(--gold-dim);color:var(--gold)">5</span></div><div class="pipe-cards"><div class="pcard"><div class="pcard-name">James Ashton</div><div class="pcard-co">MD · Thornton Advisory</div><div class="pcard-tags"><span class="ptag">Budget ✓</span></div></div></div></div>
+          <div class="pipe-col"><div class="pipe-col-head"><span class="pipe-col-name">Booked</span><span class="pipe-count" style="background:var(--green-dim);color:var(--green)">2</span></div><div class="pipe-cards"><div class="pcard" style="border-color:rgba(74,222,128,0.2)"><div class="pcard-name">Sarah Whitfield</div><div class="pcard-co">CFO · Meridian Capital</div><div class="pcard-tags"><span class="ptag" style="color:var(--green);border-color:rgba(74,222,128,0.3)">Mar 8</span></div></div></div></div>
+        </div>
+      </div>
+
+      <!-- Upcoming meetings mini -->
+      <div class="card">
+        <div class="panel-hd"><div><div class="panel-title">Upcoming Meetings</div><div class="panel-sub">Booked by OutreachOS</div></div><button class="panel-act" onclick="navigate('meetings')">All Meetings →</button></div>
+        <div class="meetings-list">
+          <div class="meeting-row"><div class="meet-date"><div class="meet-day">8</div><div class="meet-mon">Mar</div></div><div><div class="meet-name">Sarah Whitfield</div><div class="meet-co">CFO · Meridian Capital Group</div><span class="meet-badge mb-conf">Confirmed</span></div><div class="meet-right"><div class="meet-time">10:00 AM</div><div class="meet-dur">30 min</div></div></div>
+          <div class="meeting-row"><div class="meet-date"><div class="meet-day">11</div><div class="meet-mon">Mar</div></div><div><div class="meet-name">Daniel Frost</div><div class="meet-co">Founder · Frost Capital Advisory</div><span class="meet-badge mb-conf">Confirmed</span></div><div class="meet-right"><div class="meet-time">2:00 PM</div><div class="meet-dur">45 min</div></div></div>
+          <div class="meeting-row"><div class="meet-date"><div class="meet-day">14</div><div class="meet-mon">Mar</div></div><div><div class="meet-name">Sophie Caldwell</div><div class="meet-co">CEO · Caldwell Strategy Partners</div><span class="meet-badge mb-pend">Pending</span></div><div class="meet-right"><div class="meet-time">11:30 AM</div><div class="meet-dur">30 min</div></div></div>
+        </div>
+      </div>
+    </div><!-- /overview -->
+
+    <!-- ── VIEW: Pipeline ──────────────────────────────────────────────── -->
+    <div class="view" id="view-pipeline">
+      <div class="view-header">
+        <div class="view-title">Lead <em>Pipeline</em></div>
+        <div class="view-sub">47 active prospects across all stages — drag cards to update status</div>
+      </div>
+      <div class="pipeline-board" style="margin-bottom:0">
+        <div class="pipe-col"><div class="pipe-col-head"><span class="pipe-col-name">Identified</span><span class="pipe-count">14</span></div><div class="pipe-cards">
+          <div class="pcard"><div class="pcard-name">Thomas Clarke</div><div class="pcard-co">Partner · Clarke &amp; Assoc.</div><div class="pcard-tags"><span class="ptag">LI</span><span class="ptag">£5M+</span></div></div>
+          <div class="pcard"><div class="pcard-name">Priya Mehta</div><div class="pcard-co">CFO · NovaBridge Capital</div><div class="pcard-tags"><span class="ptag">CH</span><span class="ptag">Finance</span></div></div>
+          <div class="pcard"><div class="pcard-name">David Osei</div><div class="pcard-co">CEO · Osei Group Holdings</div><div class="pcard-tags"><span class="ptag">LI</span></div></div>
+          <div class="pcard"><div class="pcard-name">Lucy Hargreaves</div><div class="pcard-co">MD · Hargreaves Wealth</div><div class="pcard-tags"><span class="ptag">CH</span><span class="ptag">London</span></div></div>
+        </div></div>
+        <div class="pipe-col"><div class="pipe-col-head"><span class="pipe-col-name">In Outreach</span><span class="pipe-count" style="background:var(--blue-dim);color:var(--blue)">18</span></div><div class="pipe-cards">
+          <div class="pcard"><div class="pcard-name">Rachel Lowe</div><div class="pcard-co">CEO · Farrow &amp; Lowe Ltd</div><div class="pcard-tags"><span class="ptag">Email</span><span class="ptag">Step 2</span></div></div>
+          <div class="pcard"><div class="pcard-name">Emma Fletcher</div><div class="pcard-co">MD · Elara Consulting</div><div class="pcard-tags"><span class="ptag">LI</span><span class="ptag">Step 1</span></div></div>
+          <div class="pcard"><div class="pcard-name">Mark Henley</div><div class="pcard-co">Director · Crestwood Partners</div><div class="pcard-tags"><span class="ptag">Email</span><span class="ptag">Step 3</span></div></div>
+          <div class="pcard"><div class="pcard-name">Richard Boyd</div><div class="pcard-co">CFO · Boyd Capital</div><div class="pcard-tags"><span class="ptag">Voice</span></div></div>
+        </div></div>
+        <div class="pipe-col"><div class="pipe-col-head"><span class="pipe-col-name">Responded</span><span class="pipe-count" style="background:var(--amber-dim);color:var(--amber)">8</span></div><div class="pipe-cards">
+          <div class="pcard"><div class="pcard-name">Oliver Barnes</div><div class="pcard-co">Director · Crestwood Partners</div><div class="pcard-tags"><span class="ptag">Positive</span></div></div>
+          <div class="pcard"><div class="pcard-name">Fiona Grant</div><div class="pcard-co">Partner · Grant Strategy</div><div class="pcard-tags"><span class="ptag">Interested</span></div></div>
+          <div class="pcard"><div class="pcard-name">Andrew Simms</div><div class="pcard-co">CEO · Simms Advisory</div><div class="pcard-tags"><span class="ptag">Needs time</span></div></div>
+        </div></div>
+        <div class="pipe-col"><div class="pipe-col-head"><span class="pipe-col-name">Qualified</span><span class="pipe-count" style="background:var(--gold-dim);color:var(--gold)">5</span></div><div class="pipe-cards">
+          <div class="pcard"><div class="pcard-name">James Ashton</div><div class="pcard-co">MD · Thornton Advisory</div><div class="pcard-tags"><span class="ptag">Budget ✓</span><span class="ptag">Voice</span></div></div>
+          <div class="pcard"><div class="pcard-name">Sophie Caldwell</div><div class="pcard-co">CEO · Caldwell Strategy</div><div class="pcard-tags"><span class="ptag">Budget ✓</span></div></div>
+          <div class="pcard"><div class="pcard-name">Henry Pierce</div><div class="pcard-co">Partner · Pierce &amp; Co</div><div class="pcard-tags"><span class="ptag">Budget ✓</span></div></div>
+        </div></div>
+        <div class="pipe-col"><div class="pipe-col-head"><span class="pipe-col-name">Booked</span><span class="pipe-count" style="background:var(--green-dim);color:var(--green)">2</span></div><div class="pipe-cards">
+          <div class="pcard" style="border-color:rgba(74,222,128,0.2)"><div class="pcard-name">Sarah Whitfield</div><div class="pcard-co">CFO · Meridian Capital</div><div class="pcard-tags"><span class="ptag" style="color:var(--green);border-color:rgba(74,222,128,0.3)">Mar 8 · 10am</span></div></div>
+          <div class="pcard" style="border-color:rgba(74,222,128,0.2)"><div class="pcard-name">Daniel Frost</div><div class="pcard-co">Founder · Frost Capital</div><div class="pcard-tags"><span class="ptag" style="color:var(--green);border-color:rgba(74,222,128,0.3)">Mar 11 · 2pm</span></div></div>
+        </div></div>
+      </div>
+
+      <div style="margin-top:1.5rem">
+        <div class="card">
+          <div class="panel-hd"><div><div class="panel-title">All Leads</div><div class="panel-sub">Recent &amp; active prospects</div></div><button class="panel-act">Export CSV</button></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Name</th><th>Status</th><th>Channel</th><th>Fit Score</th><th>Source</th></tr></thead>
+              <tbody>
+                <tr><td><div>Sarah Whitfield</div><div class="td-sub">CFO · Meridian Capital Group</div></td><td><span class="pill pill-booked">Booked</span></td><td><span class="ch-icon"><svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>LinkedIn</span></td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:94%"></div></div><div class="score-n">94</div></div></td><td><span style="font-size:0.65rem;color:var(--muted)">LI Scrape</span></td></tr>
+                <tr><td><div>James Ashton</div><div class="td-sub">MD · Thornton Advisory</div></td><td><span class="pill pill-qual">Qualified</span></td><td><span class="ch-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72 19.79 19.79 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45 19.79 19.79 0 0 0 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>Voice</span></td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:88%"></div></div><div class="score-n">88</div></div></td><td><span style="font-size:0.65rem;color:var(--muted)">LI Scrape</span></td></tr>
+                <tr><td><div>Rachel Lowe</div><div class="td-sub">CEO · Farrow &amp; Lowe Ltd</div></td><td><span class="pill pill-reach">Outreach</span></td><td><span class="ch-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>Email</span></td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:81%"></div></div><div class="score-n">81</div></div></td><td><span style="font-size:0.65rem;color:var(--muted)">Email seq.</span></td></tr>
+                <tr><td><div>Priya Mehta</div><div class="td-sub">CFO · NovaBridge Capital</div></td><td><span class="pill pill-id">Identified</span></td><td><span class="ch-icon"><svg viewBox="0 0 24 24"><path d="M3 21h18M4 21V7l8-4 8 4v14M9 21v-5h6v5"/></svg>Co. House</span></td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:91%"></div></div><div class="score-n">91</div></div></td><td><span style="font-size:0.65rem;color:var(--muted)">Companies House</span></td></tr>
+                <tr><td><div>Mark Henley</div><div class="td-sub">Director · Crestwood Partners</div></td><td><span class="pill pill-reach">Outreach</span></td><td><span class="ch-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>Email</span></td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:76%"></div></div><div class="score-n">76</div></div></td><td><span style="font-size:0.65rem;color:var(--muted)">LI Scrape</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div><!-- /pipeline -->
+
+    <!-- ── VIEW: Campaigns ─────────────────────────────────────────────── -->
+    <div class="view" id="view-campaigns">
+      <div class="view-header">
+        <div class="view-title">Active <em>Campaigns</em></div>
+        <div class="view-sub">3 campaigns running across all channels this month</div>
+      </div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Total Sent</div><div class="kpi-icon ic-blue"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div></div><div class="kpi-num">1,248</div><div class="kpi-foot"><span class="badge-up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+18%</span><span class="kpi-period">vs last month</span></div></div>
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Avg. Open Rate</div><div class="kpi-icon ic-gold"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div><div class="kpi-num">34<em>%</em></div><div class="kpi-foot"><span class="badge-up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+4%</span><span class="kpi-period">vs last month</span></div></div>
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Total Replies</div><div class="kpi-icon ic-green"><svg viewBox="0 0 24 24"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg></div></div><div class="kpi-num">14</div><div class="kpi-foot"><span class="badge-up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+6</span><span class="kpi-period">vs last month</span></div></div>
+      </div>
+      <div class="card">
+        <div class="panel-hd"><div class="panel-title">All Campaigns</div><button class="panel-act">+ New Campaign</button></div>
+        <div class="camp-item"><div><div class="camp-name">Financial Services — CFO/MD · London &amp; SE</div><div class="camp-meta">LinkedIn + Email · Started Feb 5 · 34 contacts · <span class="pill pill-active" style="font-size:0.58rem;padding:0.08rem 0.4rem">Active</span></div><div class="camp-prog"><div class="camp-prog-fill" style="width:68%"></div></div></div><div class="camp-stats"><div class="cst"><div class="cst-n" style="color:var(--blue)">847</div><div class="cst-l">Sent</div></div><div class="cst"><div class="cst-n" style="color:var(--gold)">34%</div><div class="cst-l">Open</div></div><div class="cst"><div class="cst-n" style="color:var(--green)">8</div><div class="cst-l">Replies</div></div></div></div>
+        <div class="camp-item"><div><div class="camp-name">Professional Services — Founders · UK-Wide</div><div class="camp-meta">Voice + Email · Started Feb 19 · 18 contacts · <span class="pill pill-active" style="font-size:0.58rem;padding:0.08rem 0.4rem">Active</span></div><div class="camp-prog"><div class="camp-prog-fill" style="width:41%"></div></div></div><div class="camp-stats"><div class="cst"><div class="cst-n" style="color:var(--blue)">312</div><div class="cst-l">Sent</div></div><div class="cst"><div class="cst-n" style="color:var(--gold)">28%</div><div class="cst-l">Open</div></div><div class="cst"><div class="cst-n" style="color:var(--green)">4</div><div class="cst-l">Replies</div></div></div></div>
+        <div class="camp-item"><div><div class="camp-name">Companies House Targets — £2M–£10M Revenue</div><div class="camp-meta">LinkedIn · Started Mar 1 · New batch · <span class="pill pill-active" style="font-size:0.58rem;padding:0.08rem 0.4rem">Active</span></div><div class="camp-prog"><div class="camp-prog-fill" style="width:12%"></div></div></div><div class="camp-stats"><div class="cst"><div class="cst-n" style="color:var(--blue)">89</div><div class="cst-l">Sent</div></div><div class="cst"><div class="cst-n" style="color:var(--gold)">41%</div><div class="cst-l">Open</div></div><div class="cst"><div class="cst-n" style="color:var(--green)">2</div><div class="cst-l">Replies</div></div></div></div>
+      </div>
+    </div><!-- /campaigns -->
+
+    <!-- ── VIEW: Meetings ──────────────────────────────────────────────── -->
+    <div class="view" id="view-meetings">
+      <div class="view-header">
+        <div class="view-title">Booked <em>Meetings</em></div>
+        <div class="view-sub">4 meetings confirmed — all pre-qualified by OutreachOS</div>
+      </div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">This Month</div><div class="kpi-icon ic-gold"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div></div><div class="kpi-num">4</div><div class="kpi-foot"><span class="badge-up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+2</span><span class="kpi-period">vs last month</span></div></div>
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Show Rate</div><div class="kpi-icon ic-green"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></div><div class="kpi-num">87<em>%</em></div><div class="kpi-foot"><span class="badge-up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+5%</span><span class="kpi-period">all time</span></div></div>
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Avg. to Book</div><div class="kpi-icon ic-blue"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div><div class="kpi-num">72<em>h</em></div><div class="kpi-foot"><span class="badge-up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>Faster</span><span class="kpi-period">vs 96h last month</span></div></div>
+      </div>
+      <div class="card">
+        <div class="panel-hd"><div class="panel-title">All Meetings</div><button class="panel-act">Sync Calendar</button></div>
+        <div class="meetings-list">
+          <div class="meeting-row"><div class="meet-date"><div class="meet-day">8</div><div class="meet-mon">Mar</div></div><div><div class="meet-name">Sarah Whitfield</div><div class="meet-co">CFO · Meridian Capital Group · via LinkedIn</div><span class="meet-badge mb-conf">Confirmed</span></div><div class="meet-right"><div class="meet-time">10:00 AM</div><div class="meet-dur">30 min</div></div></div>
+          <div class="meeting-row"><div class="meet-date"><div class="meet-day">11</div><div class="meet-mon">Mar</div></div><div><div class="meet-name">Daniel Frost</div><div class="meet-co">Founder · Frost Capital Advisory · via Email</div><span class="meet-badge mb-conf">Confirmed</span></div><div class="meet-right"><div class="meet-time">2:00 PM</div><div class="meet-dur">45 min</div></div></div>
+          <div class="meeting-row"><div class="meet-date"><div class="meet-day">14</div><div class="meet-mon">Mar</div></div><div><div class="meet-name">Sophie Caldwell</div><div class="meet-co">CEO · Caldwell Strategy Partners · via Voice</div><span class="meet-badge mb-pend">Pending confirmation</span></div><div class="meet-right"><div class="meet-time">11:30 AM</div><div class="meet-dur">30 min</div></div></div>
+          <div class="meeting-row"><div class="meet-date"><div class="meet-day">18</div><div class="meet-mon">Mar</div></div><div><div class="meet-name">James Ashton</div><div class="meet-co">MD · Thornton Advisory · via Voice + Email</div><span class="meet-badge mb-conf">Confirmed</span></div><div class="meet-right"><div class="meet-time">3:00 PM</div><div class="meet-dur">30 min</div></div></div>
+        </div>
+      </div>
+    </div><!-- /meetings -->
+
+    <!-- ── VIEW: LinkedIn ──────────────────────────────────────────────── -->
+    <div class="view" id="view-linkedin">
+      <div class="view-header">
+        <div class="view-title">LinkedIn <em>Intelligence</em></div>
+        <div class="view-sub">Profile scraping, connection activity, and signal monitoring</div>
+      </div>
+      <div class="chan-stats-grid">
+        <div class="chan-stat"><div class="chan-stat-label">Profiles Scraped</div><div class="chan-stat-num">1,840<em>/mo</em></div></div>
+        <div class="chan-stat"><div class="chan-stat-label">Connections Sent</div><div class="chan-stat-num">312</div></div>
+        <div class="chan-stat"><div class="chan-stat-label">Acceptance Rate</div><div class="chan-stat-num">41<em>%</em></div></div>
+        <div class="chan-stat"><div class="chan-stat-label">InMail Replies</div><div class="chan-stat-num">28</div></div>
+        <div class="chan-stat"><div class="chan-stat-label">Profile Views Generated</div><div class="chan-stat-num">620</div></div>
+        <div class="chan-stat"><div class="chan-stat-label">Leads to Outreach</div><div class="chan-stat-num">94</div></div>
+      </div>
+      <div class="card">
+        <div class="panel-hd"><div><div class="panel-title">Recent Scrape Batches</div><div class="panel-sub">Leads sourced from LinkedIn by ICP match</div></div><button class="panel-act">Run New Scrape</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Batch</th><th>Filter</th><th>Leads Found</th><th>Avg. Fit Score</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody>
+              <tr><td>#LI-0031</td><td><span style="font-size:0.7rem;color:var(--muted-lt)">CFO/MD · Financial Services · London</span></td><td>23</td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:88%"></div></div><div class="score-n">88</div></div></td><td><span class="pill pill-booked">Complete</span></td><td><span style="font-size:0.65rem;color:var(--muted)">Today, 1h ago</span></td></tr>
+              <tr><td>#LI-0030</td><td><span style="font-size:0.7rem;color:var(--muted-lt)">Founders · Professional Services · UK</span></td><td>41</td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:81%"></div></div><div class="score-n">81</div></div></td><td><span class="pill pill-booked">Complete</span></td><td><span style="font-size:0.65rem;color:var(--muted)">Yesterday</span></td></tr>
+              <tr><td>#LI-0029</td><td><span style="font-size:0.7rem;color:var(--muted-lt)">Directors · Consulting · Manchester &amp; NW</span></td><td>18</td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:74%"></div></div><div class="score-n">74</div></div></td><td><span class="pill pill-booked">Complete</span></td><td><span style="font-size:0.65rem;color:var(--muted)">Feb 28</span></td></tr>
+              <tr><td>#LI-0028</td><td><span style="font-size:0.7rem;color:var(--muted-lt)">Partners · Law Firms · UK-Wide</span></td><td>55</td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:79%"></div></div><div class="score-n">79</div></div></td><td><span class="pill pill-booked">Complete</span></td><td><span style="font-size:0.65rem;color:var(--muted)">Feb 25</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /linkedin -->
+
+    <!-- ── VIEW: Email ─────────────────────────────────────────────────── -->
+    <div class="view" id="view-email">
+      <div class="view-header">
+        <div class="view-title">Email <em>Outbound</em></div>
+        <div class="view-sub">Sequence performance, deliverability, and inbox placement</div>
+      </div>
+      <div class="chan-stats-grid">
+        <div class="chan-stat"><div class="chan-stat-label">Emails Sent</div><div class="chan-stat-num">847<em>/mo</em></div></div>
+        <div class="chan-stat"><div class="chan-stat-label">Open Rate</div><div class="chan-stat-num">34<em>%</em></div></div>
+        <div class="chan-stat"><div class="chan-stat-label">Reply Rate</div><div class="chan-stat-num">18<em>%</em></div></div>
+        <div class="chan-stat"><div class="chan-stat-label">Inbox Placement</div><div class="chan-stat-num">97<em>%</em></div></div>
+        <div class="chan-stat"><div class="chan-stat-label">Bounce Rate</div><div class="chan-stat-num">0.4<em>%</em></div></div>
+        <div class="chan-stat"><div class="chan-stat-label">Unsubscribes</div><div class="chan-stat-num">0.2<em>%</em></div></div>
+      </div>
+      <div class="card">
+        <div class="panel-hd"><div><div class="panel-title">Active Sequences</div><div class="panel-sub">Personalised email sequences running</div></div><button class="panel-act">Create Sequence</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Sequence</th><th>Steps</th><th>Contacts</th><th>Open Rate</th><th>Reply Rate</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td><div>Sequence A — CFO Intro</div><div class="td-sub">Financial Services · LinkedIn trigger</div></td><td>5 steps</td><td>34</td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:38%"></div></div><div class="score-n">38%</div></div></td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:22%"></div></div><div class="score-n">22%</div></div></td><td><span class="pill pill-active">Active</span></td></tr>
+              <tr><td><div>Sequence B — Founder Outreach</div><div class="td-sub">Professional Services · Cold start</div></td><td>4 steps</td><td>18</td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:29%"></div></div><div class="score-n">29%</div></div></td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:14%"></div></div><div class="score-n">14%</div></div></td><td><span class="pill pill-active">Active</span></td></tr>
+              <tr><td><div>Sequence C — Companies House Warm</div><div class="td-sub">Multi-sector · CH data trigger</div></td><td>3 steps</td><td>27</td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:41%"></div></div><div class="score-n">41%</div></div></td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:19%"></div></div><div class="score-n">19%</div></div></td><td><span class="pill pill-active">Active</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /email -->
+
+    <!-- ── VIEW: Voice ─────────────────────────────────────────────────── -->
+    <div class="view" id="view-voice">
+      <div class="view-header">
+        <div class="view-title">AI Voice <em>Qualification</em></div>
+        <div class="view-sub">VAPI-powered call activity, connect rates, and qualification outcomes</div>
+      </div>
+      <div class="chan-stats-grid">
+        <div class="chan-stat"><div class="chan-stat-label">Calls Made</div><div class="chan-stat-num">142<em>/mo</em></div></div>
+        <div class="chan-stat"><div class="chan-stat-label">Connect Rate</div><div class="chan-stat-num">61<em>%</em></div></div>
+        <div class="chan-stat"><div class="chan-stat-label">Qualified Rate</div><div class="chan-stat-num">38<em>%</em></div></div>
+        <div class="chan-stat"><div class="chan-stat-label">Avg. Call Duration</div><div class="chan-stat-num">4.2<em>min</em></div></div>
+        <div class="chan-stat"><div class="chan-stat-label">Handed to Sales</div><div class="chan-stat-num">22</div></div>
+        <div class="chan-stat"><div class="chan-stat-label">Meetings from Voice</div><div class="chan-stat-num">6</div></div>
+      </div>
+      <div class="card">
+        <div class="panel-hd"><div><div class="panel-title">Recent Call Log</div><div class="panel-sub">AI voice qualification calls — last 14 days</div></div><button class="panel-act">Download Log</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Prospect</th><th>Duration</th><th>Outcome</th><th>Notes</th><th>Date</th></tr></thead>
+            <tbody>
+              <tr><td><div>James Ashton</div><div class="td-sub">MD · Thornton Advisory</div></td><td>5m 12s</td><td><span class="pill pill-booked">Qualified</span></td><td><span style="font-size:0.7rem;color:var(--muted-lt)">Budget confirmed, timeline Q2</span></td><td><span style="font-size:0.65rem;color:var(--muted)">Today</span></td></tr>
+              <tr><td><div>Henry Pierce</div><div class="td-sub">Partner · Pierce &amp; Co</div></td><td>3m 48s</td><td><span class="pill pill-qual">Interested</span></td><td><span style="font-size:0.7rem;color:var(--muted-lt)">Wants follow-up email</span></td><td><span style="font-size:0.65rem;color:var(--muted)">Yesterday</span></td></tr>
+              <tr><td><div>Richard Boyd</div><div class="td-sub">CFO · Boyd Capital</div></td><td>1m 02s</td><td><span class="pill pill-cold">Not reached</span></td><td><span style="font-size:0.7rem;color:var(--muted-lt)">Voicemail left</span></td><td><span style="font-size:0.65rem;color:var(--muted)">Feb 28</span></td></tr>
+              <tr><td><div>Sophie Caldwell</div><div class="td-sub">CEO · Caldwell Strategy</div></td><td>6m 33s</td><td><span class="pill pill-booked">Qualified</span></td><td><span style="font-size:0.7rem;color:var(--muted-lt)">Meeting requested, confirmed pending</span></td><td><span style="font-size:0.65rem;color:var(--muted)">Feb 27</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /voice -->
+
+    <!-- ── VIEW: Companies House ────────────────────────────────────────── -->
+    <div class="view" id="view-companies-house">
+      <div class="view-header">
+        <div class="view-title">Companies House <em>Intelligence</em></div>
+        <div class="view-sub">UK business search — filtered by revenue, sector, and directorship</div>
+      </div>
+      <div class="ch-search">
+        <input class="ch-input" type="text" placeholder="Search by company name, sector, director, or SIC code…" />
+        <select class="ch-filter"><option>All Sectors</option><option>Financial Services</option><option>Professional Services</option><option>Consulting</option><option>Technology</option></select>
+        <select class="ch-filter"><option>Revenue: Any</option><option>£1M–£5M</option><option>£5M–£20M</option><option>£20M+</option></select>
+        <select class="ch-filter"><option>Region: Any</option><option>London</option><option>South East</option><option>North West</option><option>UK-Wide</option></select>
+        <button class="tb-btn">Search</button>
+      </div>
+      <div class="card">
+        <div class="panel-hd"><div><div class="panel-title">Matched Companies</div><div class="panel-sub">Sourced and cross-referenced against your ICP</div></div><button class="panel-act">Export to Pipeline</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Company</th><th>Sector</th><th>Incorporated</th><th>Director</th><th>ICP Match</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td><div>NovaBridge Capital Ltd</div><div class="td-sub">London · 12 employees</div></td><td><span style="font-size:0.7rem;color:var(--muted-lt)">Financial Services</span></td><td><span style="font-size:0.7rem;color:var(--muted)">2018</span></td><td><div>Priya Mehta</div><div class="td-sub">Director · CFO role</div></td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:91%"></div></div><div class="score-n">91</div></div></td><td><button class="panel-act" style="font-size:0.65rem">Add to Pipeline</button></td></tr>
+              <tr><td><div>Hargreaves Wealth Management Ltd</div><div class="td-sub">Birmingham · 28 employees</div></td><td><span style="font-size:0.7rem;color:var(--muted-lt)">Wealth Management</span></td><td><span style="font-size:0.7rem;color:var(--muted)">2012</span></td><td><div>Lucy Hargreaves</div><div class="td-sub">Founder &amp; MD</div></td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:86%"></div></div><div class="score-n">86</div></div></td><td><button class="panel-act" style="font-size:0.65rem">Add to Pipeline</button></td></tr>
+              <tr><td><div>Osei Group Holdings Ltd</div><div class="td-sub">London · 45 employees</div></td><td><span style="font-size:0.7rem;color:var(--muted-lt)">Professional Services</span></td><td><span style="font-size:0.7rem;color:var(--muted)">2015</span></td><td><div>David Osei</div><div class="td-sub">CEO</div></td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:83%"></div></div><div class="score-n">83</div></div></td><td><button class="panel-act" style="font-size:0.65rem">Add to Pipeline</button></td></tr>
+              <tr><td><div>Grant Strategy Consulting Ltd</div><div class="td-sub">Manchester · 9 employees</div></td><td><span style="font-size:0.7rem;color:var(--muted-lt)">Consulting</span></td><td><span style="font-size:0.7rem;color:var(--muted)">2020</span></td><td><div>Fiona Grant</div><div class="td-sub">Founder &amp; Partner</div></td><td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:77%"></div></div><div class="score-n">77</div></div></td><td><button class="panel-act" style="font-size:0.65rem">Add to Pipeline</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /companies-house -->
+
+    <!-- ── VIEW: ICP Settings ──────────────────────────────────────────── -->
+    <div class="view" id="view-icp">
+      <div class="view-header">
+        <div class="view-title">ICP <em>Settings</em></div>
+        <div class="view-sub">Define exactly who we target — your ideal client profile shapes every scrape, sequence, and qualification call</div>
+      </div>
+      <div class="card" style="padding:1.5rem">
+        <div class="icp-grid">
+          <div class="form-group">
+            <label class="form-label">Target Industries</label>
+            <input class="form-input" type="text" value="Financial Services, Professional Services, Consulting" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Geography</label>
+            <select class="form-select"><option>UK-Wide</option><option>London &amp; South East</option><option>North West</option><option>Midlands</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Target Job Titles / Seniority</label>
+            <input class="form-input" type="text" value="CFO, MD, CEO, Partner, Founder" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Company Revenue Range</label>
+            <select class="form-select"><option>£2M – £20M</option><option>£500k – £2M</option><option>£20M – £100M</option><option>£100M+</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Min. Employees</label>
+            <input class="form-input" type="number" value="5" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Max. Employees</label>
+            <input class="form-input" type="number" value="250" />
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Buying Signals to Monitor</label>
+            <div class="form-tags">
+              <span class="form-tag">Funding round ×</span>
+              <span class="form-tag">Headcount growth ×</span>
+              <span class="form-tag">New director appointed ×</span>
+              <span class="form-tag">Office expansion ×</span>
+              <span class="form-tag">+ Add signal</span>
+            </div>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Ideal Client Description (used to personalise messaging)</label>
+            <textarea class="form-textarea">We serve UK-based financial and professional services firms with 10–200 employees, typically run by a CFO or founder-MD who is frustrated with inconsistent business development and is ready to invest in a systematic pipeline approach.</textarea>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Exclusions (industries or companies to avoid)</label>
+            <input class="form-input" type="text" value="Retail, e-commerce, manufacturing, sole traders" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-save">Save ICP Settings</button>
+          <button class="btn-cancel">Cancel</button>
+        </div>
+      </div>
+    </div><!-- /icp -->
+
+    <!-- ── VIEW: Reports ───────────────────────────────────────────────── -->
+    <div class="view" id="view-reports">
+      <div class="view-header">
+        <div class="view-title">Performance <em>Reports</em></div>
+        <div class="view-sub">Monthly reports generated automatically — downloadable as PDF or CSV</div>
+      </div>
+      <div class="reports-grid">
+        <div class="report-card"><div class="report-icon"><svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div><div class="report-name">February 2025 — Full Performance Report</div><div class="report-desc">Outreach volume, response rates, pipeline value generated, meetings booked, and channel breakdown.</div><div class="report-meta"><span class="report-date">Generated Mar 1, 2025</span><span class="report-dl">↓ Download PDF</span></div></div>
+        <div class="report-card"><div class="report-icon"><svg viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 0 0-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 0 1 5.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 0 1 9.288 0M15 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></svg></div><div class="report-name">Pipeline Quality Report — Q1 2025</div><div class="report-desc">Lead fit scores, qualification rates, industry breakdown, and ICP alignment analysis.</div><div class="report-meta"><span class="report-date">Generated Mar 1, 2025</span><span class="report-dl">↓ Download PDF</span></div></div>
+        <div class="report-card"><div class="report-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div><div class="report-name">Email Deliverability Report — Feb 2025</div><div class="report-desc">Inbox placement, open rates, bounce rates, unsubscribe analysis, and domain health.</div><div class="report-meta"><span class="report-date">Generated Mar 1, 2025</span><span class="report-dl">↓ Download CSV</span></div></div>
+        <div class="report-card"><div class="report-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><div class="report-name">Meeting Outcomes Report — Feb 2025</div><div class="report-desc">Show rates, conversion from meeting to proposal, deal value and source attribution by channel.</div><div class="report-meta"><span class="report-date">Generated Mar 1, 2025</span><span class="report-dl">↓ Download PDF</span></div></div>
+      </div>
+    </div><!-- /reports -->
+
+  </main>
+</div>
+
+<script>
+  // ── Navigation ─────────────────────────────────────────────────────────
+  const sidebarLinks = document.querySelectorAll('.sidebar-link[data-view]');
+  const views = document.querySelectorAll('.view');
+  const topbarTitle = document.getElementById('topbarTitle');
+
+  const titles = {
+    'overview':'Dashboard','pipeline':'Pipeline','campaigns':'Campaigns',
+    'meetings':'Meetings','linkedin':'LinkedIn','email':'Email',
+    'voice':'Voice Calls','companies-house':'Companies House',
+    'icp':'ICP Settings','reports':'Reports'
+  };
+
+  function navigate(viewId) {
+    views.forEach(v => v.classList.remove('active'));
+    sidebarLinks.forEach(l => l.classList.remove('active'));
+
+    const target = document.getElementById('view-' + viewId);
+    if (target) target.classList.add('active');
+
+    const link = document.querySelector(`.sidebar-link[data-view="${viewId}"]`);
+    if (link) link.classList.add('active');
+
+    topbarTitle.textContent = titles[viewId] || viewId;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  sidebarLinks.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      navigate(link.dataset.view);
+    });
+  });
+
+  // ── Bar chart ──────────────────────────────────────────────────────────
+  const weeks = ['W1','W2','W3','W4','W5','W6','W7','W8'];
+  const emailD  = [52,68,74,61,88,95,83,101];
+  const liD     = [30,38,42,35,50,54,48,60];
+  const meetD   = [1,1,2,1,2,3,2,3];
+  const maxV    = Math.max(...emailD) * 1.1;
+  const barsEl  = document.getElementById('chartBars');
+  const lblsEl  = document.getElementById('chartLabels');
+
+  weeks.forEach((w, i) => {
+    const g = document.createElement('div');
+    g.className = 'bar-grp';
+    g.innerHTML = `
+      <div class="bar bar-gold"  style="height:0%;transition:height 0.9s ${i*0.06}s cubic-bezier(0.16,1,0.3,1)" data-h="${(emailD[i]/maxV*100).toFixed(1)}"></div>
+      <div class="bar bar-muted" style="height:0%;transition:height 0.9s ${i*0.06+0.08}s cubic-bezier(0.16,1,0.3,1)" data-h="${(liD[i]/maxV*100).toFixed(1)}"></div>
+      <div class="bar bar-green" style="height:0%;transition:height 0.9s ${i*0.06+0.16}s cubic-bezier(0.16,1,0.3,1)" data-h="${(meetD[i]/maxV*100).toFixed(1)}"></div>`;
+    barsEl.appendChild(g);
+
+    const l = document.createElement('div');
+    l.className = 'xlabel'; l.textContent = w;
+    lblsEl.appendChild(l);
+  });
+
+  // Animate bars after a tick
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.querySelectorAll('.bar[data-h]').forEach(b => {
+      b.style.height = b.dataset.h + '%';
+    });
+  }));
+
+  // ── Sparklines ─────────────────────────────────────────────────────────
+  function sparkline(id, vals, color) {
+    const svg = document.getElementById(id);
+    if (!svg) return;
+    const mx = Math.max(...vals), mn = Math.min(...vals), rng = mx - mn || 1;
+    const W = 120, H = 22, n = vals.length;
+    const pts = vals.map((v,i) => `${(i/(n-1))*W},${H - ((v-mn)/rng)*(H-4) - 2}`).join(' ');
+    const fill = `0,${H} ${pts} ${W},${H}`;
+    svg.innerHTML = `<defs><linearGradient id="g${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color}" stop-opacity="0.2"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/></linearGradient></defs><polygon points="${fill}" fill="url(#g${id})"/><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }
+  sparkline('sp1', [28,30,29,32,31,34,33,34], '#c9a96e');
+  sparkline('sp2', [18,19,20,21,20,22,21,22], '#60a5fa');
+  sparkline('sp3', [64,62,63,61,62,60,61,61], '#4ade80');
+
+  // ── Live activity feed ─────────────────────────────────────────────────
+  const feedEvents = [
+    { dot:'var(--purple)', title:'<strong>LinkedIn scrape</strong> completed — 31 new leads', detail:'CFO/MD · Financial Services · Manchester' },
+    { dot:'var(--gold)',   title:'<strong>Henry Pierce</strong> qualified via voice call',      detail:'Partner · Pierce &amp; Co · Budget confirmed' },
+    { dot:'var(--green)',  title:'<strong>Fiona Grant</strong> booked a discovery call',        detail:'Partner · Grant Strategy · Mar 20, 2pm' },
+    { dot:'var(--blue)',   title:'Follow-up email sent to <strong>Mark Henley</strong>',        detail:'Director · Crestwood Partners · Step 3 of 5' },
+    { dot:'var(--purple)', title:'<strong>14 companies</strong> sourced from Companies House',  detail:'Revenue £2M–£10M · Professional Services' },
+  ];
+  let evIdx = 0;
+  setInterval(() => {
+    const feed = document.getElementById('actFeed');
+    if (!feed) return;
+    const ev = feedEvents[evIdx++ % feedEvents.length];
+    const el = document.createElement('div');
+    el.className = 'act-item';
+    el.style.cssText = 'opacity:0;transform:translateX(-6px)';
+    el.innerHTML = `<div class="act-dot-col"><div class="act-dot" style="background:${ev.dot}"></div></div><div class="act-text"><div class="act-title">${ev.title}</div><div class="act-detail">${ev.detail}</div></div><div class="act-time">just now</div>`;
+    feed.prepend(el);
+    requestAnimationFrame(() => { el.style.transition='opacity 0.4s ease,transform 0.4s ease'; el.style.opacity='1'; el.style.transform='none'; });
+    const items = feed.querySelectorAll('.act-item');
+    if (items.length > 7) { const last = items[items.length-1]; last.style.transition='opacity 0.3s'; last.style.opacity='0'; setTimeout(()=>last.remove(), 300); }
+  }, 4500);
+</script>
+</body>
+</html>
