@@ -12,6 +12,7 @@ import heyreachRouter from './routes/heyreach';
 import instantlyRouter from './routes/instantly';
 import voiceRouter from './routes/voice';
 import dashboardRouter from './routes/dashboard';
+import eventsRouter from './routes/events';
 
 const app = express();
 
@@ -31,5 +32,6 @@ app.use('/api', heyreachRouter);
 app.use('/api', instantlyRouter);
 app.use('/api', voiceRouter);
 app.use('/api', dashboardRouter);
+app.use('/api', eventsRouter);
 
 export default app;
