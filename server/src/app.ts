@@ -2,6 +2,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import healthRouter from './routes/health';
 import authRouter from './routes/auth';
+import passwordResetRouter from './routes/passwordReset';
 
 const app = express();
 
@@ -11,5 +12,6 @@ app.use(cookieParser());
 
 app.use('/api', healthRouter);
 app.use('/api', authRouter);
+app.use('/api', passwordResetRouter);
 
 export default app;
