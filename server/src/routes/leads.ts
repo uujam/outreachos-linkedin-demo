@@ -1,6 +1,8 @@
 import { Router, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { requireAuth, AuthRequest } from '../middleware/requireAuth';
+import { getQueues } from '../queues';
+import { checkLeadCap, incrementLeadCount } from '../lib/leadCap';
 import {
   EnrichmentStage,
   OutreachStage,
@@ -9,6 +11,94 @@ import {
 } from '@prisma/client';
 
 const router = Router();
+
+// ─── POST /api/leads — manual lead entry (B-006a) ────────────────────────────
+
+router.post('/leads', requireAuth, async (req: AuthRequest, res: Response) => {
+  const {
+    fullName, jobTitle, company, linkedinUrl,
+    emailAddress, phoneNumber, notes,
+  } = req.body as {
+    fullName?: string;
+    jobTitle?: string;
+    company?: string;
+    linkedinUrl?: string;
+    emailAddress?: string;
+    phoneNumber?: string;
+    notes?: string;
+  };
+
+  if (!fullName || !company) {
+    res.status(400).json({ error: 'fullName and company are required' });
+    return;
+  }
+
+  const clientId = req.user!.sub;
+
+  // Duplicate detection: same LinkedIn URL or email already exists for this client
+  if (linkedinUrl || emailAddress) {
+    const duplicate = await prisma.lead.findFirst({
+      where: {
+        clientId,
+        OR: [
+          ...(linkedinUrl ? [{ linkedinUrl }] : []),
+          ...(emailAddress ? [{ emailAddress }] : []),
+        ],
+      },
+    });
+    if (duplicate) {
+      res.status(409).json({
+        error: 'A lead with this LinkedIn URL or email already exists in your pipeline',
+        existingLeadId: duplicate.id,
+      });
+      return;
+    }
+  }
+
+  // Lead cap check
+  const capStatus = await checkLeadCap(clientId);
+  if (!capStatus.allowed) {
+    res.status(402).json({
+      error: 'Monthly lead cap reached. Upgrade your plan or wait for next billing period.',
+      used: capStatus.used,
+      cap: capStatus.cap,
+    });
+    return;
+  }
+
+  const lead = await prisma.lead.create({
+    data: {
+      clientId,
+      fullName,
+      jobTitle: jobTitle ?? '',
+      company,
+      linkedinUrl,
+      emailAddress,
+      phoneNumber,
+      source: LeadSource.Manual,
+      enrichmentStage: EnrichmentStage.Discovered,
+    },
+  });
+
+  await incrementLeadCount(clientId);
+
+  // Queue enrichment job, skipping steps for fields already provided
+  try {
+    const queues = getQueues();
+    await queues.enrichment.add('enrich-lead', {
+      leadId: lead.id,
+      clientId,
+      skipLinkedin: !!linkedinUrl,
+      skipEmail: !!emailAddress,
+      notes,
+    });
+  } catch (err) {
+    console.error('[ManualLead] Failed to queue enrichment job:', err);
+    // Don't fail the request — lead was created successfully
+  }
+
+  res.status(201).json({ lead });
+});
 
 // ─── GET /api/leads — list with filtering ────────────────────────────────────
 
