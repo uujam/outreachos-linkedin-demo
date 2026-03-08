@@ -5,6 +5,7 @@ import authRouter from './routes/auth';
 import passwordResetRouter from './routes/passwordReset';
 import icpRouter from './routes/icp';
 import companiesHouseRouter from './routes/companiesHouse';
+import leadsRouter from './routes/leads';
 
 const app = express();
 
@@ -17,5 +18,6 @@ app.use('/api', authRouter);
 app.use('/api', passwordResetRouter);
 app.use('/api', icpRouter);
 app.use('/api', companiesHouseRouter);
+app.use('/api', leadsRouter);
 
 export default app;
