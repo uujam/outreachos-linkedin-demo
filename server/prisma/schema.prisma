@@ -1,5 +1,5 @@
-// Full schema will be defined in B-002.
-// Placeholder model required for Prisma Client generation in B-001 scaffolding.
+// OutreachOS — Full Database Schema
+// B-002: All tables D-001 through D-022
 
 generator client {
   provider = "prisma-client-js"
@@ -10,10 +10,630 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Placeholder - will be replaced by full schema in B-002
-model Placeholder {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
+// ─── Enums ────────────────────────────────────────────────────────────────────
 
-  @@map("_placeholder")
+enum Role {
+  client
+  admin
+}
+
+enum LeadSource {
+  LinkedIn
+  CompaniesHouse
+  Manual
+}
+
+enum EnrichmentStage {
+  Discovered
+  Identified
+  Enriched
+  Validated
+  ReadyForOutreach
+  InvalidEmail
+}
+
+enum OutreachStage {
+  InOutreach
+  Responded
+  Qualified
+}
+
+enum TerminalOutcome {
+  MeetingBooked
+  NotInterested
+  FollowUpLater
+  WrongFit
+  DoNotContact
+}
+
+enum CampaignChannel {
+  LinkedIn
+  Email
+  Voice
+}
+
+enum CampaignStatus {
+  Active
+  Paused
+  Complete
+}
+
+enum ActivityChannel {
+  LinkedIn
+  Email
+  Voice
+}
+
+enum ActivityAction {
+  Sent
+  Opened
+  Clicked
+  Replied
+  Called
+  Voicemail
+}
+
+enum VoiceCallOutcome {
+  Qualified
+  Interested
+  NotReached
+  Voicemail
+}
+
+enum MeetingBookedVia {
+  Calendly
+  CalCom
+  Manual
+}
+
+enum MeetingConfirmation {
+  Confirmed
+  Pending
+  NoShow
+}
+
+enum SequenceStatus {
+  Active
+  Paused
+  Complete
+}
+
+enum ScrapeBatchStatus {
+  Running
+  Complete
+  Failed
+}
+
+enum SubscriptionPlan {
+  Starter
+  Growth
+  Enterprise
+}
+
+enum SubscriptionStatus {
+  active
+  past_due
+  cancelled
+  unpaid
+}
+
+enum InvoiceStatus {
+  paid
+  open
+  void
+}
+
+enum EnrichmentStep {
+  Identify
+  Enrich
+  Validate
+}
+
+enum EnrichmentLogStatus {
+  success
+  failed
+  skipped
+}
+
+enum ThirdPartyService {
+  ProxyCurl
+  ApolloIo
+  HunterIo
+  ZeroBounce
+  Clay
+  VAPI
+  Twilio
+  Instantly
+  Phantombuster
+  Heyreach
+}
+
+enum ApiActionType {
+  EnrichmentLookup
+  ClayFallbackRun
+  VoiceCallMinute
+  TwilioBrandedCall
+  EmailSent
+  ScrapeRun
+  LinkedInAction
+  CacheHit
+}
+
+enum BookingEventType {
+  BookingCreated
+  BookingCancelled
+  BookingRescheduled
+}
+
+enum IntegrationService {
+  calendly
+  cal_com
+  google_calendar
+  microsoft_outlook
+}
+
+enum IntegrationStatus {
+  active
+  error
+  disconnected
+}
+
+enum MessageDirection {
+  outbound
+  inbound
+}
+
+enum MessageChannel {
+  email
+  linkedin
+  voice
+  note
+}
+
+enum MessageTool {
+  Instantly
+  Heyreach
+  VAPI
+  Manual
+}
+
+enum MessageType {
+  email
+  connection_request
+  linkedin_message
+  voice_call
+  note
+}
+
+enum DeliveryStatus {
+  sent
+  delivered
+  opened
+  clicked
+  replied
+  bounced
+  unsubscribed
+  accepted
+  not_reached
+  voicemail
+  qualified
+}
+
+// ─── D-001 | User / Client Account ───────────────────────────────────────────
+
+model User {
+  id                     String   @id @default(cuid())
+  name                   String
+  email                  String   @unique
+  hashedPassword         String
+  role                   Role     @default(client)
+  companyName            String
+  createdDate            DateTime @default(now())
+  lastLogin              DateTime?
+  customLeadCapOverride  Int?
+  onboardingDismissed    Boolean  @default(false)
+  notificationPreferences Json?
+  discoveryPaused        Boolean  @default(false)
+
+  leads               Lead[]
+  campaigns           Campaign[]
+  subscriptions       Subscription[]
+  invoices            Invoice[]
+  passwordResetTokens PasswordResetToken[]
+  notifications       Notification[]
+  integrations        IntegrationConnection[]
+  messages            Message[]
+  reportSnapshots     ReportSnapshot[]
+  apiUsageLogs        ApiUsageLog[]
+  icpSettings         IcpSettings?
+
+  @@map("users")
+}
+
+// ─── D-002 | Lead / Prospect ──────────────────────────────────────────────────
+
+model Lead {
+  id                 String           @id @default(cuid())
+  clientId           String
+  fullName           String
+  jobTitle           String
+  company            String
+  linkedinUrl        String?
+  emailAddress       String?
+  phoneNumber        String?
+  source             LeadSource
+  fitScore           Int?
+  fitScoreReasoning  String?
+  enrichmentStage    EnrichmentStage  @default(Discovered)
+  outreachStage      OutreachStage?
+  terminalOutcome    TerminalOutcome?
+  followUpDate       DateTime?
+  dncFlag            Boolean          @default(false)
+  assignedCampaignId String?
+  currentChannelStep String?
+  createdDate        DateTime         @default(now())
+  lastActivityDate   DateTime?
+
+  client           User              @relation(fields: [clientId], references: [id])
+  campaign         Campaign?         @relation(fields: [assignedCampaignId], references: [id])
+  activities       OutreachActivity[]
+  voiceCalls       VoiceCallRecord[]
+  meetings         Meeting[]
+  enrichmentLogs   EnrichmentLog[]
+  messages         Message[]
+  bookingWebhooks  BookingWebhookEvent[]
+
+  @@map("leads")
+}
+
+// ─── D-003 | Company (from Companies House) ───────────────────────────────────
+
+model Company {
+  id                   String    @id @default(cuid())
+  companyName          String
+  companiesHouseNumber String    @unique
+  sicCodes             String?
+  incorporatedDate     DateTime?
+  directorNames        String?
+  employeeRange        String?
+  region               String?
+  icpMatchScore        Int?
+
+  @@map("companies")
+}
+
+// ─── D-004 | Campaign ─────────────────────────────────────────────────────────
+
+model Campaign {
+  id               String            @id @default(cuid())
+  clientId         String
+  name             String
+  channelMix       CampaignChannel[]
+  targetIcpFilters Json?
+  startDate        DateTime?
+  status           CampaignStatus    @default(Active)
+  channelConfig    Json?
+  createdAt        DateTime          @default(now())
+
+  client         User            @relation(fields: [clientId], references: [id])
+  leads          Lead[]
+  emailSequences EmailSequence[]
+
+  @@map("campaigns")
+}
+
+// ─── D-005 | Outreach Activity ────────────────────────────────────────────────
+
+model OutreachActivity {
+  id         String          @id @default(cuid())
+  leadId     String
+  channel    ActivityChannel
+  actionType ActivityAction
+  timestamp  DateTime        @default(now())
+  notes      String?
+
+  lead Lead @relation(fields: [leadId], references: [id])
+
+  @@map("outreach_activities")
+}
+
+// ─── D-006 | Email Sequence ───────────────────────────────────────────────────
+
+model EmailSequence {
+  id               String         @id @default(cuid())
+  sequenceName     String
+  steps            Json
+  linkedCampaignId String
+  status           SequenceStatus @default(Active)
+
+  campaign Campaign @relation(fields: [linkedCampaignId], references: [id])
+
+  @@map("email_sequences")
+}
+
+// ─── D-007 | Voice Call Record ────────────────────────────────────────────────
+
+model VoiceCallRecord {
+  id             String           @id @default(cuid())
+  leadId         String
+  callDate       DateTime
+  duration       Int
+  outcome        VoiceCallOutcome
+  aiSummaryNotes String?
+  recordingUrl   String?
+
+  lead Lead @relation(fields: [leadId], references: [id])
+
+  @@map("voice_call_records")
+}
+
+// ─── D-008 | Meeting ──────────────────────────────────────────────────────────
+
+model Meeting {
+  id                 String              @id @default(cuid())
+  leadId             String
+  meetingDate        DateTime
+  duration           Int
+  channelBookedVia   MeetingBookedVia
+  confirmationStatus MeetingConfirmation @default(Pending)
+
+  lead Lead @relation(fields: [leadId], references: [id])
+
+  @@map("meetings")
+}
+
+// ─── D-009 | ICP Settings ─────────────────────────────────────────────────────
+
+model IcpSettings {
+  id              String   @id @default(cuid())
+  clientId        String   @unique
+  industries      String[]
+  geography       String[]
+  jobTitles       String[]
+  revenueRange    String?
+  employeeRange   String?
+  buyingSignals   String?
+  descriptionText String?
+  exclusions      String?
+  updatedAt       DateTime @updatedAt
+
+  client User @relation(fields: [clientId], references: [id])
+
+  @@map("icp_settings")
+}
+
+// ─── D-010 | LinkedIn Scrape Batch ───────────────────────────────────────────
+
+model LinkedInScrapeBatch {
+  id              String            @id @default(cuid())
+  batchId         String            @unique
+  filtersUsed     Json?
+  numberOfLeads   Int               @default(0)
+  averageFitScore Float?
+  status          ScrapeBatchStatus @default(Running)
+  dateRun         DateTime          @default(now())
+
+  @@map("linkedin_scrape_batches")
+}
+
+// ─── D-011 | Report Snapshot ──────────────────────────────────────────────────
+
+model ReportSnapshot {
+  id            String   @id @default(cuid())
+  clientId      String
+  reportType    String
+  dateGenerated DateTime @default(now())
+  dataPayload   Json
+  fileUrl       String?
+
+  client User @relation(fields: [clientId], references: [id])
+
+  @@map("report_snapshots")
+}
+
+// ─── D-012 | Subscription ─────────────────────────────────────────────────────
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  clientId             String             @unique
+  stripeCustomerId     String             @unique
+  stripeSubscriptionId String             @unique
+  planName             SubscriptionPlan
+  status               SubscriptionStatus @default(active)
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  leadsUsedThisPeriod  Int                @default(0)
+  trialEndDate         DateTime?
+
+  client   User      @relation(fields: [clientId], references: [id])
+  invoices Invoice[]
+
+  @@map("subscriptions")
+}
+
+// ─── D-013 | Invoice ──────────────────────────────────────────────────────────
+
+model Invoice {
+  id             String        @id @default(cuid())
+  clientId       String
+  subscriptionId String?
+  stripeInvoiceId String       @unique
+  amount         Int
+  status         InvoiceStatus
+  invoiceDate    DateTime
+  pdfDownloadUrl String?
+
+  client       User          @relation(fields: [clientId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  @@map("invoices")
+}
+
+// ─── D-014 | Pricing Plan ─────────────────────────────────────────────────────
+
+model PricingPlan {
+  id                   String  @id @default(cuid())
+  planName             String  @unique
+  priceMonthly         Int
+  priceAnnual          Int
+  featuresList         Json
+  stripePriceIdMonthly String
+  stripePriceIdAnnual  String
+  monthlyLeadCap       Int?
+
+  @@map("pricing_plans")
+}
+
+// ─── D-015 | Enrichment Log ───────────────────────────────────────────────────
+
+model EnrichmentLog {
+  id                String              @id @default(cuid())
+  leadId            String
+  enrichmentStep    EnrichmentStep
+  status            EnrichmentLogStatus
+  dataRetrieved     String?
+  thirdPartyService ThirdPartyService
+  timestamp         DateTime            @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id])
+
+  @@map("enrichment_logs")
+}
+
+// ─── D-016 | Booking Webhook Event ───────────────────────────────────────────
+
+model BookingWebhookEvent {
+  id                 String           @id @default(cuid())
+  rawPayload         Json
+  eventType          BookingEventType
+  matchedLeadId      String?
+  processedTimestamp DateTime         @default(now())
+
+  matchedLead Lead? @relation(fields: [matchedLeadId], references: [id])
+
+  @@map("booking_webhook_events")
+}
+
+// ─── D-017 | API Usage Log ────────────────────────────────────────────────────
+
+model ApiUsageLog {
+  id                  String            @id @default(cuid())
+  clientId            String
+  serviceName         ThirdPartyService
+  actionType          ApiActionType
+  unitCount           Int
+  approximateUnitCost Int
+  billingPeriod       String
+  timestamp           DateTime          @default(now())
+
+  client User @relation(fields: [clientId], references: [id])
+
+  @@map("api_usage_logs")
+}
+
+// ─── D-018 | Enrichment Cache ─────────────────────────────────────────────────
+
+model EnrichmentCache {
+  id                     String    @id @default(cuid())
+  cacheKey               String    @unique
+  fullName               String?
+  companyName            String?
+  companyDomain          String?
+  linkedinUrl            String?
+  jobTitle               String?
+  email                  String?
+  phone                  String?
+  emailDeliverable       Boolean?
+  emailDeliverableReason String?
+  sourceLinkedin         String?
+  sourceEmail            String?
+  sourceVerified         String?
+  lastVerifiedAt         DateTime?
+  globalSuppression      Boolean   @default(false)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  @@index([cacheKey])
+  @@map("enrichment_cache")
+}
+
+// ─── D-019 | Password Reset Token ────────────────────────────────────────────
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  clientId  String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  client User @relation(fields: [clientId], references: [id])
+
+  @@map("password_reset_tokens")
+}
+
+// ─── D-020 | Notification ─────────────────────────────────────────────────────
+
+model Notification {
+  id        String    @id @default(cuid())
+  clientId  String
+  eventType String
+  title     String
+  body      String
+  linkUrl   String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  client User @relation(fields: [clientId], references: [id])
+
+  @@map("notifications")
+}
+
+// ─── D-021 | Integration Connection ──────────────────────────────────────────
+
+model IntegrationConnection {
+  id                String             @id @default(cuid())
+  clientId          String
+  service           IntegrationService
+  accessToken       String
+  refreshToken      String?
+  tokenExpiresAt    DateTime?
+  scope             String?
+  calendlyWebhookId String?
+  lastSyncAt        DateTime?
+  status            IntegrationStatus  @default(active)
+  errorMessage      String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  client User @relation(fields: [clientId], references: [id])
+
+  @@unique([clientId, service])
+  @@map("integration_connections")
+}
+
+// ─── D-022 | Message (Conversation Timeline) ─────────────────────────────────
+
+model Message {
+  id             String           @id @default(cuid())
+  leadId         String
+  clientId       String
+  direction      MessageDirection
+  channel        MessageChannel
+  tool           MessageTool
+  messageType    MessageType
+  subject        String?
+  body           String
+  deliveryStatus DeliveryStatus
+  externalId     String?
+  metadata       Json?
+  timestamp      DateTime
+  createdAt      DateTime         @default(now())
+
+  lead   Lead @relation(fields: [leadId], references: [id])
+  client User @relation(fields: [clientId], references: [id])
+
+  @@index([leadId, timestamp])
+  @@index([clientId])
+  @@map("messages")
 }
