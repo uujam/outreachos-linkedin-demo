@@ -6,6 +6,7 @@ import { findEmailByDomain } from './hunter';
 import { validateEmail } from './zerobounce';
 import { submitToClayBatch } from './clay';
 import { LeadEnrichmentInput, EnrichmentData } from './types';
+import { enrolLeadIfReady } from '../orchestration/automationTrigger';
 
 const CACHE_TTL_DAYS = 90;
 
@@ -117,6 +118,7 @@ export async function runEnrichmentPipeline(input: LeadEnrichmentInput): Promise
       },
     });
     await logEnrichmentStep(leadId, EnrichmentStep.Validate, EnrichmentLogStatus.success, ThirdPartyService.ZeroBounce, 'cache hit');
+    await enrolLeadIfReady(leadId, clientId).catch(() => {});
     return;
   }
 
@@ -216,4 +218,6 @@ export async function runEnrichmentPipeline(input: LeadEnrichmentInput): Promise
       enrichmentStage: EnrichmentStage.ReadyForOutreach,
     },
   });
+
+  await enrolLeadIfReady(leadId, clientId).catch(() => {});
 }

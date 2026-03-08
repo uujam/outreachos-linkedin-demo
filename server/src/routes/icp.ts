@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { requireAuth, AuthRequest } from '../middleware/requireAuth';
+import { triggerAutomationOnIcpSave } from '../orchestration/automationTrigger';
 
 const router = Router();
 
@@ -66,6 +67,11 @@ router.put('/icp', requireAuth, async (req: AuthRequest, res: Response) => {
       ...(exclusions !== undefined && { exclusions }),
     },
   });
+
+  // Fire-and-forget: trigger discovery + enrichment pipeline
+  triggerAutomationOnIcpSave(clientId).catch((err) =>
+    console.error('[ICP] Failed to trigger automation:', err)
+  );
 
   res.status(200).json({ settings });
 });
