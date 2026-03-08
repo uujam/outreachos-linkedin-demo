@@ -32,6 +32,16 @@ jest.mock('../src/queues', () => ({
   closeQueues: jest.fn(),
 }));
 
+jest.mock('../src/orchestration/channel-sequencer', () => ({
+  scheduleChannelSteps: jest.fn().mockResolvedValue({}),
+  cancelPendingOutreachJobs: jest.fn().mockResolvedValue({}),
+}));
+
+jest.mock('../src/lib/heyreach', () => ({
+  enrolLeadInHeyreach: jest.fn().mockResolvedValue({ success: true }),
+  getLinkedInAccountStatus: jest.fn(),
+}));
+
 jest.mock('../src/lib/prisma', () => ({
   prisma: {
     user: { findUnique: jest.fn(), update: jest.fn().mockResolvedValue({}) },
@@ -138,7 +148,11 @@ describe('enrolLeadIfReady', () => {
         }),
       })
     );
-    expect(mockOutreachAdd).toHaveBeenCalled();
+    // scheduleChannelSteps (mocked) is now called instead of direct outreach queue add
+    const { scheduleChannelSteps } = jest.requireMock('../src/orchestration/channel-sequencer') as { scheduleChannelSteps: jest.Mock };
+    expect(scheduleChannelSteps).toHaveBeenCalledWith(
+      expect.objectContaining({ leadId: 'lead-001', campaignId: 'campaign-001' })
+    );
   });
 
   it('does nothing if no active campaign exists', async () => {

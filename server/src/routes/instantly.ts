@@ -8,6 +8,7 @@
 import { Router, Request, Response } from 'express';
 import crypto from 'crypto';
 import { prisma } from '../lib/prisma';
+import { cancelPendingOutreachJobs } from '../orchestration/channel-sequencer';
 import { requireAuth, AuthRequest } from '../middleware/requireAuth';
 import { enrolLeadInInstantly } from '../lib/instantly';
 import {
@@ -141,6 +142,7 @@ router.post('/instantly/webhook', async (req: Request, res: Response) => {
       data: { dncFlag: true, terminalOutcome: 'DoNotContact', lastActivityDate: eventTimestamp },
     });
   } else if (event_type === 'email_replied') {
+    await cancelPendingOutreachJobs(lead.id).catch(() => {});
     await prisma.lead.update({
       where: { id: lead.id },
       data: { outreachStage: 'Responded', lastActivityDate: eventTimestamp },

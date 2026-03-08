@@ -7,6 +7,7 @@
 import { Router, Request, Response } from 'express';
 import crypto from 'crypto';
 import { prisma } from '../lib/prisma';
+import { cancelPendingOutreachJobs } from '../orchestration/channel-sequencer';
 import {
   MessageDirection,
   MessageChannel,
@@ -128,8 +129,9 @@ router.post('/heyreach/webhook', async (req: Request, res: Response) => {
     },
   });
 
-  // If a reply is received, advance lead to Responded stage
+  // If a reply is received, cancel all pending channel steps and mark Responded
   if (event === 'message_received' || event === 'connection_accepted') {
+    await cancelPendingOutreachJobs(lead.id).catch(() => {});
     await prisma.lead.update({
       where: { id: lead.id },
       data: { outreachStage: 'Responded', lastActivityDate: eventTimestamp },
