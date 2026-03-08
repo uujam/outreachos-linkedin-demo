@@ -10,6 +10,7 @@ import linkedinRouter from './routes/linkedin';
 import enrichmentRouter from './routes/enrichment';
 import heyreachRouter from './routes/heyreach';
 import instantlyRouter from './routes/instantly';
+import voiceRouter from './routes/voice';
 
 const app = express();
 
@@ -27,5 +28,6 @@ app.use('/api', linkedinRouter);
 app.use('/api', enrichmentRouter);
 app.use('/api', heyreachRouter);
 app.use('/api', instantlyRouter);
+app.use('/api', voiceRouter);
 
 export default app;
