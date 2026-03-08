@@ -7,6 +7,7 @@ import icpRouter from './routes/icp';
 import companiesHouseRouter from './routes/companiesHouse';
 import leadsRouter from './routes/leads';
 import linkedinRouter from './routes/linkedin';
+import enrichmentRouter from './routes/enrichment';
 
 const app = express();
 
@@ -21,5 +22,6 @@ app.use('/api', icpRouter);
 app.use('/api', companiesHouseRouter);
 app.use('/api', leadsRouter);
 app.use('/api', linkedinRouter);
+app.use('/api', enrichmentRouter);
 
 export default app;
