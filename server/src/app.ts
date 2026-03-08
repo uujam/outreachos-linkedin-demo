@@ -4,6 +4,7 @@ import healthRouter from './routes/health';
 import authRouter from './routes/auth';
 import passwordResetRouter from './routes/passwordReset';
 import icpRouter from './routes/icp';
+import companiesHouseRouter from './routes/companiesHouse';
 
 const app = express();
 
@@ -15,5 +16,6 @@ app.use('/api', healthRouter);
 app.use('/api', authRouter);
 app.use('/api', passwordResetRouter);
 app.use('/api', icpRouter);
+app.use('/api', companiesHouseRouter);
 
 export default app;
