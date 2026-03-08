@@ -1,0 +1,19 @@
+// Full schema will be defined in B-002.
+// Placeholder model required for Prisma Client generation in B-001 scaffolding.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Placeholder - will be replaced by full schema in B-002
+model Placeholder {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  @@map("_placeholder")
+}

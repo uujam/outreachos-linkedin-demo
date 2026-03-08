@@ -20,8 +20,8 @@
       --gold-lt:  #e2c99a;
       --gold-dim: rgba(201,169,110,0.12);
       --cream:    #ede8e0;
-      --muted:    #5e5a55;
-      --muted-lt: #8a857e;
+      --muted:    #7d7870;
+      --muted-lt: #a09990;
       --border:   #242018;
       --border-lt:#302c26;
       --ease:     cubic-bezier(0.76, 0, 0.24, 1);
@@ -181,7 +181,7 @@
       position: relative;
       z-index: 1;
     }
-    .hero-left {}
+    .hero-left { position: relative; }
     .hero-eyebrow {
       display: flex; align-items: center; gap: 1rem;
       margin-bottom: 2.2rem;
@@ -602,6 +602,244 @@
     .d4 { transition-delay: 0.32s; }
     .d5 { transition-delay: 0.40s; }
 
+    /* ── Integrations ────────────────────────────────────────────────── */
+    #integrations { padding: 5rem 3rem; border-bottom: 1px solid var(--border); }
+    .integrations-inner { max-width: 1400px; margin: 0 auto; }
+    .integrations-label { font-size: 0.65rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin-bottom: 2.5rem; text-align: center; }
+    .integrations-grid { display: flex; align-items: stretch; justify-content: center; flex-wrap: wrap; }
+    .integration-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 1.1rem 2rem;
+      border: 1px solid var(--border);
+      margin: -1px 0 0 -1px;
+      transition: border-color 0.3s, background 0.3s;
+      cursor: default; min-width: 0;
+    }
+    .integration-item:hover { border-color: var(--border-lt); background: var(--bg-card); }
+    .integration-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .integration-icon svg { width: 100%; height: 100%; }
+    .integration-name { font-size: 0.78rem; letter-spacing: 0.06em; color: var(--muted-lt); white-space: nowrap; }
+
+    /* ── Demo Preview ────────────────────────────────────────────────── */
+    #demo { background: var(--bg-soft); padding: 8rem 3rem; }
+    .demo-header { text-align: center; margin-bottom: 4rem; }
+    .demo-title { font-size: clamp(2.2rem, 3.5vw, 4rem); margin-bottom: 1rem; }
+    .demo-title em { font-style: italic; color: var(--gold); }
+    .demo-subtitle { font-size: 0.92rem; color: var(--muted-lt); max-width: 500px; margin: 0 auto; line-height: 1.75; }
+    .demo-frame {
+      max-width: 1100px; margin: 0 auto;
+      border: 1px solid var(--border-lt);
+      border-radius: 4px; overflow: hidden;
+    }
+    .demo-bar {
+      background: var(--bg-card); padding: 0.75rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .demo-dots { display: flex; gap: 0.45rem; }
+    .demo-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .demo-dot:nth-child(1) { background: #ff5f57; }
+    .demo-dot:nth-child(2) { background: #febc2e; }
+    .demo-dot:nth-child(3) { background: #28c840; }
+    .demo-url {
+      flex: 1; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 3px; padding: 0.3rem 0.9rem;
+      font-size: 0.68rem; color: var(--muted); letter-spacing: 0.04em;
+      max-width: 340px; margin: 0 auto; text-align: center;
+    }
+    .demo-iframe-wrap { position: relative; overflow: hidden; background: var(--bg); }
+    .demo-iframe-wrap iframe { display: block; border: none; pointer-events: none; }
+
+    /* ── Before / After ──────────────────────────────────────────────── */
+    #compare { padding: 8rem 3rem; }
+    .compare-inner { max-width: 1100px; margin: 0 auto; }
+    .compare-header { text-align: center; margin-bottom: 5rem; }
+    .compare-title { font-size: clamp(2.2rem, 3.5vw, 4rem); margin-bottom: 1rem; }
+    .compare-title em { font-style: italic; color: var(--gold); }
+    .compare-subtitle { font-size: 0.92rem; color: var(--muted-lt); max-width: 460px; margin: 0 auto; line-height: 1.75; }
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+    .compare-col { padding: 3rem; }
+    .compare-col.before { background: var(--bg-card); }
+    .compare-col.after { background: var(--bg-soft); }
+    .compare-col-label {
+      font-size: 0.65rem; letter-spacing: 0.22em; text-transform: uppercase;
+      margin-bottom: 2rem; display: flex; align-items: center; gap: 0.8rem;
+    }
+    .compare-col.before .compare-col-label { color: var(--muted); }
+    .compare-col.after  .compare-col-label { color: var(--gold); }
+    .compare-badge { padding: 0.2rem 0.6rem; border-radius: 99px; font-size: 0.6rem; }
+    .compare-col.before .compare-badge { background: rgba(255,255,255,0.05); color: var(--muted); }
+    .compare-col.after  .compare-badge { background: var(--gold-dim); color: var(--gold); }
+    .compare-items { display: flex; flex-direction: column; }
+    .compare-item {
+      display: flex; align-items: flex-start; gap: 1rem;
+      padding: 0.95rem 0; border-bottom: 1px solid var(--border);
+      font-size: 0.88rem; line-height: 1.55; color: var(--muted-lt);
+    }
+    .compare-item:last-child { border-bottom: none; }
+    .compare-item-icon { flex-shrink: 0; margin-top: 0.05rem; font-size: 0.9rem; font-weight: 500; line-height: 1.55; }
+    .compare-item-icon.cross { color: #f87171; }
+    .compare-item-icon.tick  { color: #4ade80; }
+
+    /* ── Pricing ─────────────────────────────────────────────────────── */
+    #pricing { background: var(--bg-soft); padding: 8rem 3rem; }
+    .pricing-header { text-align: center; margin-bottom: 1.5rem; }
+    .pricing-title { font-size: clamp(2.5rem, 4vw, 4.5rem); margin-bottom: 1rem; }
+    .pricing-title em { font-style: italic; color: var(--gold); }
+    .pricing-subtitle { font-size: 0.92rem; color: var(--muted-lt); max-width: 460px; margin: 0 auto 2.5rem; line-height: 1.75; }
+    .pricing-toggle-wrap { display: flex; justify-content: center; margin-bottom: 0; }
+    .pricing-toggle {
+      display: inline-flex; align-items: center;
+      background: var(--bg-card); border: 1px solid var(--border);
+      padding: 0.35rem; border-radius: 99px; gap: 0.2rem;
+    }
+    .toggle-btn {
+      font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted); padding: 0.4rem 1.2rem; border-radius: 99px;
+      border: none; background: transparent; cursor: none;
+      transition: background 0.3s, color 0.3s;
+    }
+    .toggle-btn.active { background: var(--gold); color: var(--bg); }
+    .pricing-save {
+      font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--gold); background: var(--gold-dim);
+      padding: 0.2rem 0.55rem; border-radius: 99px; margin-left: 0.5rem;
+    }
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: var(--border);
+      max-width: 1100px; margin: 3.5rem auto 0;
+    }
+    .pricing-card {
+      background: var(--bg-card); padding: 3rem;
+      display: flex; flex-direction: column; position: relative;
+      transition: background 0.3s;
+    }
+    .pricing-card:hover { background: var(--bg-hover); }
+    .pricing-card.popular { background: var(--bg); }
+    .pricing-card.popular:hover { background: var(--bg-hover); }
+    .popular-badge {
+      position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%);
+      background: var(--gold); color: var(--bg);
+      font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase;
+      padding: 0.28rem 0.9rem; white-space: nowrap;
+    }
+    .pricing-tier { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem; }
+    .pricing-price {
+      font-family: 'Cormorant Garant', serif;
+      font-size: 3.2rem; line-height: 1; color: var(--cream);
+      margin-bottom: 0.3rem; display: flex; align-items: flex-start; gap: 0.1rem;
+    }
+    .pricing-price .currency { font-size: 1.6rem; margin-top: 0.35rem; color: var(--gold); }
+    .pricing-price .amount {}
+    .pricing-price .period { font-size: 0.9rem; color: var(--muted); font-family: 'Inter', sans-serif; font-weight: 300; align-self: flex-end; margin-bottom: 0.25rem; margin-left: 0.1rem; }
+    .pricing-price-annual { display: none; }
+    .annual-active .pricing-price-monthly { display: none; }
+    .annual-active .pricing-price-annual { display: flex; }
+    .pricing-desc { font-size: 0.85rem; color: var(--muted-lt); line-height: 1.65; margin: 1rem 0 1.8rem; padding-bottom: 1.8rem; border-bottom: 1px solid var(--border); }
+    .pricing-features { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; flex: 1; margin-bottom: 2.5rem; }
+    .pricing-features li {
+      display: flex; align-items: flex-start; gap: 0.8rem;
+      font-size: 0.84rem; color: var(--muted-lt); line-height: 1.5;
+    }
+    .pricing-features li::before {
+      content: ''; flex-shrink: 0;
+      width: 1rem; height: 1px; background: var(--gold); margin-top: 0.75rem; opacity: 0.55;
+    }
+    .pricing-features li.dim { color: var(--muted); }
+    .pricing-features li.dim::before { background: var(--muted); opacity: 0.25; }
+    .pricing-cta {
+      display: block; text-align: center; text-decoration: none;
+      font-size: 0.7rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 0.9rem 1.5rem;
+      transition: background 0.3s, color 0.3s, border-color 0.3s, transform 0.3s var(--ease);
+    }
+    .pricing-cta.primary { background: var(--gold); color: var(--bg); border: 1px solid var(--gold); }
+    .pricing-cta.primary:hover { background: var(--gold-lt); border-color: var(--gold-lt); transform: translateY(-2px); }
+    .pricing-cta.outline { border: 1px solid var(--border-lt); color: var(--muted-lt); background: transparent; }
+    .pricing-cta.outline:hover { border-color: var(--gold); color: var(--gold); }
+    .pricing-note { text-align: center; margin-top: 2rem; font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em; line-height: 1.7; }
+
+    /* ── FAQ ─────────────────────────────────────────────────────────── */
+    #faq { padding: 8rem 3rem; }
+    .faq-inner { max-width: 760px; margin: 0 auto; }
+    .faq-header { text-align: center; margin-bottom: 4rem; }
+    .faq-title { font-size: clamp(2.2rem, 3.5vw, 4rem); margin-bottom: 1rem; }
+    .faq-title em { font-style: italic; color: var(--gold); }
+    .faq-subtitle { font-size: 0.92rem; color: var(--muted-lt); max-width: 400px; margin: 0 auto; line-height: 1.75; }
+    .faq-items { display: flex; flex-direction: column; }
+    .faq-item { border-top: 1px solid var(--border); }
+    .faq-item:last-child { border-bottom: 1px solid var(--border); }
+    .faq-question {
+      display: flex; align-items: center; justify-content: space-between; gap: 1.5rem;
+      padding: 1.5rem 0; cursor: none;
+      font-size: 1.1rem; font-family: 'Cormorant Garant', serif; color: var(--cream);
+      transition: color 0.3s; user-select: none;
+    }
+    .faq-question:hover { color: var(--gold-lt); }
+    .faq-icon {
+      width: 22px; height: 22px; flex-shrink: 0;
+      border: 1px solid var(--border-lt); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.3s, background 0.3s, transform 0.4s var(--ease);
+      color: var(--muted-lt); font-size: 1rem; line-height: 1;
+    }
+    .faq-item.open .faq-icon { border-color: var(--gold); background: var(--gold-dim); color: var(--gold); transform: rotate(45deg); }
+    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.5s var(--ease-out); }
+    .faq-item.open .faq-answer { max-height: 300px; }
+    .faq-answer p { font-size: 0.9rem; line-height: 1.8; color: var(--muted-lt); padding-bottom: 1.5rem; }
+
+    /* ── Demo Modal ──────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 5000;
+      background: rgba(10,9,8,0.88); backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s var(--ease);
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--bg-card); border: 1px solid var(--border-lt);
+      padding: 3.5rem; max-width: 520px; width: 90%;
+      position: relative;
+      transform: translateY(28px);
+      transition: transform 0.5s var(--ease-out);
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-close {
+      position: absolute; top: 1.2rem; right: 1.2rem;
+      background: none; border: none; color: var(--muted);
+      font-size: 1.3rem; cursor: none;
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      transition: color 0.3s;
+    }
+    .modal-close:hover { color: var(--cream); }
+    .modal-tag { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; }
+    .modal-title { font-family: 'Cormorant Garant', serif; font-size: 2.2rem; color: var(--cream); line-height: 1.1; margin-bottom: 0.5rem; }
+    .modal-subtitle { font-size: 0.85rem; color: var(--muted-lt); line-height: 1.7; margin-bottom: 2rem; }
+    .modal-form { display: flex; flex-direction: column; gap: 1rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-label { font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+    .form-input {
+      background: var(--bg); border: 1px solid var(--border-lt);
+      color: var(--cream); font-size: 0.88rem; font-family: 'Inter', sans-serif; font-weight: 300;
+      padding: 0.75rem 1rem; outline: none;
+      transition: border-color 0.3s;
+    }
+    .form-input:focus { border-color: var(--gold); }
+    .form-input::placeholder { color: var(--muted); }
+    .form-submit {
+      background: var(--gold); color: var(--bg); border: none;
+      padding: 1rem 2rem; margin-top: 0.5rem;
+      font-size: 0.72rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+      cursor: none; font-family: 'Inter', sans-serif;
+      transition: background 0.3s, transform 0.3s var(--ease);
+    }
+    .form-submit:hover { background: var(--gold-lt); transform: translateY(-2px); }
+    .form-privacy { font-size: 0.68rem; color: var(--muted); line-height: 1.6; text-align: center; }
+
     /* ── Mobile ──────────────────────────────────────────────────────── */
     @media (max-width: 960px) {
       nav { height: 60px; }
@@ -629,6 +867,17 @@
       .footer-top { grid-template-columns: 1fr; gap: 2rem; }
       .footer-contact { text-align: left; }
       .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
+      .compare-grid { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .pricing-card.popular { z-index: 1; }
+      .popular-badge { position: static; transform: none; margin-bottom: 1rem; display: inline-block; }
+      .form-row { grid-template-columns: 1fr; }
+      #integrations { padding: 3.5rem 1.5rem; }
+      .integration-item { padding: 1rem 1.2rem; }
+      #demo { padding: 5rem 1.5rem; }
+      #compare { padding: 5rem 1.5rem; }
+      #pricing { padding: 5rem 1.5rem; }
+      #faq { padding: 5rem 1.5rem; }
     }
   </style>
 </head>
@@ -643,6 +892,7 @@
     <ul class="nav-links" id="navLinks">
       <li><a href="#services" data-section="services"><span class="nav-dot"></span>Services</a></li>
       <li><a href="#process"  data-section="process"><span class="nav-dot"></span>Process</a></li>
+      <li><a href="#pricing"  data-section="pricing"><span class="nav-dot"></span>Pricing</a></li>
       <li><a href="#why"      data-section="why"><span class="nav-dot"></span>Why Us</a></li>
       <li><a href="#cta"      data-section="cta"><span class="nav-dot"></span>Contact</a></li>
     </ul>
@@ -652,7 +902,7 @@
         Client Login
       </a>
       <div class="nav-divider"></div>
-      <a href="#cta" class="nav-cta">Book a Call</a>
+      <button class="nav-cta" id="openModal">Book a Demo</button>
     </div>
   </nav>
 
@@ -675,7 +925,7 @@
           to your calendar, not your inbox.
         </p>
         <div class="hero-actions reveal d3">
-          <a href="#cta" class="btn-primary">Start Growing <span class="arrow">→</span></a>
+          <a href="#" class="btn-primary" data-modal>Book a Demo <span class="arrow">→</span></a>
           <a href="#process" class="btn-ghost">How it works <span class="arrow">→</span></a>
         </div>
       </div>
@@ -783,6 +1033,106 @@
     </div>
   </div>
 
+  <!-- ── Integrations ──────────────────────────────────────────────────── -->
+  <div id="integrations">
+    <div class="integrations-inner">
+      <p class="integrations-label reveal">Connects with your existing stack</p>
+      <div class="integrations-grid reveal d1">
+
+        <div class="integration-item">
+          <div class="integration-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" stroke="#0a66c2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="2" y="9" width="4" height="12" stroke="#0a66c2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="4" cy="4" r="2" stroke="#0a66c2" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <span class="integration-name">LinkedIn</span>
+        </div>
+
+        <div class="integration-item">
+          <div class="integration-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="#ff7a59" opacity="0.15"/>
+              <path d="M15.5 8.5a3.5 3.5 0 1 0-3.5 3.5V15l2-2" stroke="#ff7a59" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 12v5" stroke="#ff7a59" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="integration-name">HubSpot</span>
+        </div>
+
+        <div class="integration-item">
+          <div class="integration-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20.5 3.5l-17 17" stroke="#00a1e0" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="17" cy="7" r="3" stroke="#00a1e0" stroke-width="1.5"/>
+              <circle cx="7"  cy="17" r="3" stroke="#00a1e0" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <span class="integration-name">Salesforce</span>
+        </div>
+
+        <div class="integration-item">
+          <div class="integration-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="9" stroke="#c9a96e" stroke-width="1.5"/>
+              <path d="M12 8v4l3 3" stroke="#c9a96e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="integration-name">Apollo.io</span>
+        </div>
+
+        <div class="integration-item">
+          <div class="integration-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z" stroke="#e01e5a" stroke-width="1.5"/>
+              <path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" stroke="#e01e5a" stroke-width="1.5"/>
+              <path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z" stroke="#36c5f0" stroke-width="1.5"/>
+              <path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z" stroke="#36c5f0" stroke-width="1.5"/>
+              <path d="M14 9.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z" stroke="#2eb67d" stroke-width="1.5"/>
+              <path d="M14 3.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5V5h-1.5c-.83 0-1.5-.67-1.5-1.5z" stroke="#2eb67d" stroke-width="1.5"/>
+              <path d="M10 14.5c0 .83-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5z" stroke="#ecb22e" stroke-width="1.5"/>
+              <path d="M10 20.5c0 .83-.67 1.5-1.5 1.5S7 21.33 7 20.5V19h1.5c.83 0 1.5.67 1.5 1.5z" stroke="#ecb22e" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <span class="integration-name">Slack</span>
+        </div>
+
+        <div class="integration-item">
+          <div class="integration-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="4" width="18" height="18" rx="2" stroke="#006bff" stroke-width="1.5"/>
+              <path d="M3 10h18" stroke="#006bff" stroke-width="1.5"/>
+              <path d="M8 2v4M16 2v4" stroke="#006bff" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="integration-name">Calendly</span>
+        </div>
+
+        <div class="integration-item">
+          <div class="integration-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <polyline points="13 2 13 9 20 9" stroke="#ff4a00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M20 9L11 2H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9z" stroke="#ff4a00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="integration-name">Zapier</span>
+        </div>
+
+        <div class="integration-item">
+          <div class="integration-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="4" width="20" height="16" rx="2" stroke="#c9a96e" stroke-width="1.5"/>
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="#c9a96e" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <span class="integration-name">Instantly</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- ── Services ──────────────────────────────────────────────────────── -->
   <section id="services">
     <div class="section-inner">
@@ -869,6 +1219,30 @@
     </div>
   </section>
 
+  <!-- ── Demo Preview ──────────────────────────────────────────────────── -->
+  <section id="demo">
+    <div class="section-inner">
+      <div class="demo-header">
+        <div class="section-tag reveal">Live Dashboard</div>
+        <h2 class="demo-title reveal d1">Your pipeline,<br /><em>visible in real time.</em></h2>
+        <p class="demo-subtitle reveal d2">Every contact, every touchpoint, every status — one place. No spreadsheets, no chasing updates.</p>
+      </div>
+      <div class="demo-frame reveal d2">
+        <div class="demo-bar">
+          <div class="demo-dots">
+            <div class="demo-dot"></div>
+            <div class="demo-dot"></div>
+            <div class="demo-dot"></div>
+          </div>
+          <div class="demo-url">app.outreachos.io/dashboard</div>
+        </div>
+        <div class="demo-iframe-wrap" id="demoWrap">
+          <iframe id="demoIframe" src="dashboard.html" title="OutreachOS Dashboard Preview" loading="lazy"></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ── Process ───────────────────────────────────────────────────────── -->
   <section id="process">
     <div class="section-inner">
@@ -924,6 +1298,83 @@
             <p class="process-step-desc">Qualified, confirmed meetings land directly in your calendar with full context, conversation notes, and company research attached. You show up prepared to close — nothing else required.</p>
           </div>
           <div class="process-step-tag">Delivery</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Before / After ───────────────────────────────────────────────── -->
+  <section id="compare">
+    <div class="compare-inner">
+      <div class="compare-header">
+        <div class="section-tag reveal">The Difference</div>
+        <h2 class="compare-title reveal d1">Manual outreach<br />vs. <em>OutreachOS.</em></h2>
+        <p class="compare-subtitle reveal d2">See exactly what changes when you stop doing this by hand.</p>
+      </div>
+      <div class="compare-grid reveal d1">
+        <div class="compare-col before">
+          <div class="compare-col-label">
+            Without OutreachOS
+            <span class="compare-badge">Manual</span>
+          </div>
+          <div class="compare-items">
+            <div class="compare-item">
+              <span class="compare-item-icon cross">✕</span>
+              Days spent manually building contact lists from LinkedIn — no verification, high bounce rate
+            </div>
+            <div class="compare-item">
+              <span class="compare-item-icon cross">✕</span>
+              Generic copy-paste templates with &lt;2% reply rates and zero personalisation
+            </div>
+            <div class="compare-item">
+              <span class="compare-item-icon cross">✕</span>
+              No qualification — your team wastes hours on calls with companies that will never buy
+            </div>
+            <div class="compare-item">
+              <span class="compare-item-icon cross">✕</span>
+              Zero visibility into outreach activity — no dashboard, no reporting, no data
+            </div>
+            <div class="compare-item">
+              <span class="compare-item-icon cross">✕</span>
+              3–6 months to build a consistent pipeline, if it ever materialises at all
+            </div>
+            <div class="compare-item">
+              <span class="compare-item-icon cross">✕</span>
+              GDPR risk from unverified data sources and non-compliant outreach sequences
+            </div>
+          </div>
+        </div>
+        <div class="compare-col after">
+          <div class="compare-col-label">
+            With OutreachOS
+            <span class="compare-badge">Automated</span>
+          </div>
+          <div class="compare-items">
+            <div class="compare-item">
+              <span class="compare-item-icon tick">✓</span>
+              ICP-matched, verified contacts delivered within 48 hours of onboarding
+            </div>
+            <div class="compare-item">
+              <span class="compare-item-icon tick">✓</span>
+              AI-personalised, multi-channel sequences built on deep research — not templates
+            </div>
+            <div class="compare-item">
+              <span class="compare-item-icon tick">✓</span>
+              AI voice qualification filters every prospect before your team spends a minute with them
+            </div>
+            <div class="compare-item">
+              <span class="compare-item-icon tick">✓</span>
+              Live dashboard with full pipeline visibility: status, messages sent, replies, meetings booked
+            </div>
+            <div class="compare-item">
+              <span class="compare-item-icon tick">✓</span>
+              First qualified meetings typically arrive within 72 hours of campaign launch
+            </div>
+            <div class="compare-item">
+              <span class="compare-item-icon tick">✓</span>
+              Fully GDPR-compliant at every stage — data sourcing, storage, and outreach
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1025,12 +1476,187 @@
     </div>
   </section>
 
+  <!-- ── Pricing ───────────────────────────────────────────────────────── -->
+  <section id="pricing">
+    <div class="section-inner">
+      <div class="pricing-header">
+        <div class="section-tag reveal">Pricing</div>
+        <h2 class="pricing-title reveal d1">Simple, <em>transparent</em> pricing.</h2>
+        <p class="pricing-subtitle reveal d2">One flat retainer. No per-lead fees. No hidden costs. Cancel anytime after your first 30 days.</p>
+      </div>
+      <div class="pricing-toggle-wrap reveal d3">
+        <div class="pricing-toggle" id="pricingToggle">
+          <button class="toggle-btn active" data-plan="monthly">Monthly</button>
+          <button class="toggle-btn" data-plan="annual">Annual <span class="pricing-save">Save 20%</span></button>
+        </div>
+      </div>
+      <div class="pricing-grid reveal d2" id="pricingGrid">
+
+        <!-- Starter -->
+        <div class="pricing-card">
+          <div class="pricing-tier">Starter</div>
+          <div class="pricing-price pricing-price-monthly">
+            <span class="currency">£</span><span class="amount">1,497</span><span class="period">/mo</span>
+          </div>
+          <div class="pricing-price pricing-price-annual">
+            <span class="currency">£</span><span class="amount">1,197</span><span class="period">/mo</span>
+          </div>
+          <p class="pricing-desc">For founders and small teams beginning to systematise outreach. Up to 50 verified contacts per month.</p>
+          <ul class="pricing-features">
+            <li>50 ICP-verified contacts / month</li>
+            <li>LinkedIn outreach sequences</li>
+            <li>Precision email campaigns</li>
+            <li>Companies House data cross-reference</li>
+            <li>Live pipeline dashboard</li>
+            <li class="dim">AI voice qualification</li>
+            <li class="dim">Dedicated strategist</li>
+            <li class="dim">CRM integration</li>
+          </ul>
+          <a href="#" class="pricing-cta outline" data-modal>Get Started →</a>
+        </div>
+
+        <!-- Growth -->
+        <div class="pricing-card popular">
+          <div class="popular-badge">Most Popular</div>
+          <div class="pricing-tier">Growth</div>
+          <div class="pricing-price pricing-price-monthly">
+            <span class="currency">£</span><span class="amount">2,997</span><span class="period">/mo</span>
+          </div>
+          <div class="pricing-price pricing-price-annual">
+            <span class="currency">£</span><span class="amount">2,397</span><span class="period">/mo</span>
+          </div>
+          <p class="pricing-desc">For growth-stage businesses ready to fill the calendar. Up to 200 verified contacts per month across all channels.</p>
+          <ul class="pricing-features">
+            <li>200 ICP-verified contacts / month</li>
+            <li>LinkedIn + email + AI voice outreach</li>
+            <li>AI voice qualification (VAPI)</li>
+            <li>Companies House intelligence</li>
+            <li>Live pipeline dashboard</li>
+            <li>Dedicated account strategist</li>
+            <li>HubSpot / Salesforce sync</li>
+            <li>Weekly performance reporting</li>
+          </ul>
+          <a href="#" class="pricing-cta primary" data-modal>Book a Demo →</a>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="pricing-card">
+          <div class="pricing-tier">Enterprise</div>
+          <div class="pricing-price pricing-price-monthly">
+            <span class="amount" style="font-size:2.2rem; align-self:center;">Custom</span>
+          </div>
+          <div class="pricing-price pricing-price-annual">
+            <span class="amount" style="font-size:2.2rem; align-self:center;">Custom</span>
+          </div>
+          <p class="pricing-desc">For organisations with complex ICP requirements, multiple territories, or pay-per-qualified-meeting arrangements.</p>
+          <ul class="pricing-features">
+            <li>Unlimited verified contacts</li>
+            <li>Full multi-channel orchestration</li>
+            <li>AI voice qualification at scale</li>
+            <li>Pay-per-qualified-meeting option</li>
+            <li>Custom CRM &amp; workflow integrations</li>
+            <li>Dedicated senior strategist</li>
+            <li>SLA-backed meeting guarantee</li>
+            <li>White-label reporting available</li>
+          </ul>
+          <a href="#" class="pricing-cta outline" data-modal>Talk to Sales →</a>
+        </div>
+
+      </div>
+      <p class="pricing-note reveal d3">All plans include a 30-day onboarding period. · Annual plans billed quarterly. · No setup fees.</p>
+    </div>
+  </section>
+
+  <!-- ── FAQ ────────────────────────────────────────────────────────────── -->
+  <section id="faq">
+    <div class="faq-inner">
+      <div class="faq-header">
+        <div class="section-tag reveal">FAQ</div>
+        <h2 class="faq-title reveal d1">Common <em>questions.</em></h2>
+        <p class="faq-subtitle reveal d2">Everything you need to know before committing.</p>
+      </div>
+      <div class="faq-items reveal d1">
+
+        <div class="faq-item">
+          <div class="faq-question">
+            How quickly will we see results?
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">
+            <p>Most clients see their first qualified meetings booked within 72 hours of campaign launch. A full pipeline rhythm typically establishes within the first 2–3 weeks as we optimise messaging based on early response data.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            Is there a minimum contract length?
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">
+            <p>Monthly plans can be cancelled after the initial 30-day onboarding period — no long-term lock-in. Annual plans are billed quarterly and offer 20% savings over the monthly rate.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            How is this different from hiring an SDR?
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">
+            <p>A full-time SDR costs £35–50k+ per year before tools, management time, and ramp-up. OutreachOS delivers a complete outreach system — LinkedIn, email, AI voice, data intelligence, and reporting — at a fraction of that cost, active from day one.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            What does a "qualified meeting" actually mean?
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">
+            <p>A qualified meeting is a confirmed calendar booking with a decision-maker who has passed our AI voice qualification layer — confirming company fit, budget awareness, and genuine interest before we hand the meeting to you.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            What industries do you work with?
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">
+            <p>We work with B2B service businesses across 18+ sectors including professional services, financial advisory, SaaS, recruitment, consultancy, and managed services. If you sell a high-ticket B2B service, we can build your pipeline.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            Is the data GDPR compliant?
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">
+            <p>Yes, fully. Every data source we use — LinkedIn, Companies House, and our proprietary verification layer — is processed in accordance with UK GDPR. Legitimate interest is documented for every outreach campaign, and opt-out is handled automatically.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            Can you integrate with our CRM?
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">
+            <p>Growth and Enterprise plans include native sync with HubSpot and Salesforce. We also support Zapier-based integrations for other CRMs. All contact data, outreach history, and meeting notes are pushed automatically on booking.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
   <!-- ── CTA ───────────────────────────────────────────────────────────── -->
   <section id="cta">
     <div class="cta-inner">
       <h2 class="cta-title reveal">Ready to fill<br />your <em>pipeline?</em></h2>
       <div class="cta-actions reveal d2">
-        <a href="mailto:hello@outreachos.io" class="btn-primary">
+        <a href="#" class="btn-primary" data-modal>
           Book a Strategy Call <span class="arrow">→</span>
         </a>
         <p class="cta-note">
@@ -1052,8 +1678,9 @@
         <nav class="footer-nav">
           <a href="#services">Services</a>
           <a href="#process">Process</a>
+          <a href="#pricing">Pricing</a>
           <a href="#why">Why Us</a>
-          <a href="#testimonial">Results</a>
+          <a href="#faq">FAQ</a>
           <a href="#cta">Contact</a>
         </nav>
         <div class="footer-contact">
@@ -1071,6 +1698,42 @@
       </div>
     </div>
   </footer>
+
+  <!-- ── Book a Demo Modal ─────────────────────────────────────────────── -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+      <div class="modal-tag">Book a Demo</div>
+      <h2 class="modal-title" id="modalTitle">See OutreachOS<br />in action.</h2>
+      <p class="modal-subtitle">30 minutes. We'll map your ICP, show you the dashboard, and outline exactly what your pipeline could look like in 30 days.</p>
+      <form class="modal-form" id="demoForm" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="fieldFirst">First name</label>
+            <input class="form-input" id="fieldFirst" type="text" placeholder="James" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="fieldLast">Last name</label>
+            <input class="form-input" id="fieldLast" type="text" placeholder="Whitmore" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="fieldEmail">Work email</label>
+          <input class="form-input" id="fieldEmail" type="email" placeholder="james@company.co.uk" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="fieldCompany">Company</label>
+          <input class="form-input" id="fieldCompany" type="text" placeholder="Whitmore Advisory Group" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="fieldGoal">What's your primary goal?</label>
+          <input class="form-input" id="fieldGoal" type="text" placeholder="e.g. 10 qualified meetings per month" />
+        </div>
+        <button type="submit" class="form-submit">Request My Demo →</button>
+        <p class="form-privacy">No spam. No commitment. We'll respond within one business day.</p>
+      </form>
+    </div>
+  </div>
 
   <script>
     // ── Cursor ───────────────────────────────────────────────────────────
@@ -1150,6 +1813,15 @@
       }
     }, { threshold: 0.3 }).observe(whySec);
 
+    // ── Active section (add pricing, faq to tracked list) ────────────────
+    const allSections = ['services','process','demo','pricing','why','faq','cta']
+      .map(id => document.getElementById(id)).filter(Boolean);
+    window.addEventListener('scroll', () => {
+      let cur2 = '';
+      allSections.forEach(s => { if (window.scrollY >= s.offsetTop - 200) cur2 = s.id; });
+      navAnchors.forEach(a => a.classList.toggle('active', a.dataset.section === cur2));
+    }, { passive: true });
+
     // ── Testimonial carousel ─────────────────────────────────────────────
     const slides = document.querySelectorAll('.testimonial-slide');
     const dots   = document.querySelectorAll('.t-dot');
@@ -1218,6 +1890,90 @@
     }
 
     setInterval(injectFeedItem, 3500);
+    // ── Pricing toggle ───────────────────────────────────────────────────
+    const pricingGrid   = document.getElementById('pricingGrid');
+    const toggleBtns    = document.querySelectorAll('.toggle-btn');
+    toggleBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        toggleBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (btn.dataset.plan === 'annual') {
+          pricingGrid.classList.add('annual-active');
+        } else {
+          pricingGrid.classList.remove('annual-active');
+        }
+      });
+    });
+
+    // ── FAQ accordion ────────────────────────────────────────────────────
+    document.querySelectorAll('.faq-question').forEach(q => {
+      q.addEventListener('click', () => {
+        const item = q.parentElement;
+        const isOpen = item.classList.contains('open');
+        document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+        if (!isOpen) item.classList.add('open');
+      });
+    });
+
+    // ── Modal ────────────────────────────────────────────────────────────
+    const overlay   = document.getElementById('modalOverlay');
+    const openModal = document.getElementById('openModal');
+    const closeBtn  = document.getElementById('modalClose');
+    const demoForm  = document.getElementById('demoForm');
+
+    function showModal() {
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function hideModal() {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    openModal.addEventListener('click', showModal);
+    closeBtn.addEventListener('click', hideModal);
+    overlay.addEventListener('click', e => { if (e.target === overlay) hideModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') hideModal(); });
+
+    // Wire all pricing CTAs and hero CTA to modal
+    document.querySelectorAll('[data-modal]').forEach(el => {
+      el.addEventListener('click', e => { e.preventDefault(); showModal(); });
+    });
+
+    demoForm.addEventListener('submit', e => {
+      e.preventDefault();
+      demoForm.innerHTML = `
+        <div style="text-align:center; padding: 2rem 0;">
+          <div style="font-family:'Cormorant Garant',serif; font-size:2rem; color:var(--cream); margin-bottom:0.8rem;">Thank you.</div>
+          <p style="font-size:0.9rem; color:var(--muted-lt); line-height:1.75;">We'll be in touch within one business day to confirm your session.</p>
+        </div>`;
+    });
+
+    // Add modal hover to cursor ring
+    document.querySelectorAll('.modal button, .modal input, .toggle-btn, .faq-question, .pricing-cta, [data-modal]').forEach(el => {
+      el.addEventListener('mouseenter', () => ring.classList.add('hovering'));
+      el.addEventListener('mouseleave', () => ring.classList.remove('hovering'));
+    });
+
+    // ── Dashboard iframe scaling ─────────────────────────────────────────
+    function scaleDemoIframe() {
+      const wrap   = document.getElementById('demoWrap');
+      const iframe = document.getElementById('demoIframe');
+      if (!wrap || !iframe) return;
+      const nativeW = 1400;
+      const nativeH = 820;
+      const scale   = wrap.offsetWidth / nativeW;
+      iframe.style.width           = nativeW + 'px';
+      iframe.style.height          = nativeH + 'px';
+      iframe.style.transform       = `scale(${scale})`;
+      iframe.style.transformOrigin = 'top left';
+      wrap.style.height            = Math.round(nativeH * scale) + 'px';
+    }
+    window.addEventListener('resize', scaleDemoIframe);
+    // Run after iframe has loaded
+    document.getElementById('demoIframe')?.addEventListener('load', scaleDemoIframe);
+    scaleDemoIframe();
+
   </script>
 </body>
 </html>
