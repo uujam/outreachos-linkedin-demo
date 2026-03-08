@@ -5,6 +5,8 @@
  */
 import { getQueues } from '../queues';
 import { prisma } from '../lib/prisma';
+import { enrolLeadInHeyreach } from '../lib/heyreach';
+import { CampaignChannel } from '@prisma/client';
 
 const DAILY_DISCOVERY_CRON = '0 7 * * *'; // 07:00 UTC every day
 
@@ -69,6 +71,22 @@ export async function enrolLeadIfReady(leadId: string, clientId: string): Promis
       outreachStage: 'InOutreach',
     },
   });
+
+  // If the campaign has LinkedIn in its channel mix, enrol in Heyreach
+  const channelMix = campaign.channelMix as CampaignChannel[];
+  if (channelMix.includes(CampaignChannel.LinkedIn) && lead.linkedinUrl) {
+    const channelConfig = campaign.channelConfig as Record<string, unknown> | null;
+    const heyreachCampaignId = (channelConfig?.heyreachCampaignId as string | undefined);
+    if (heyreachCampaignId) {
+      await enrolLeadInHeyreach({
+        heyreachCampaignId,
+        linkedinUrl: lead.linkedinUrl,
+        fullName: lead.fullName,
+        company: lead.company,
+        jobTitle: lead.jobTitle ?? undefined,
+      }).catch((err) => console.error('[Heyreach] Enrolment failed:', err));
+    }
+  }
 
   // Queue outreach job
   const queues = getQueues();

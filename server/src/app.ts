@@ -8,6 +8,7 @@ import companiesHouseRouter from './routes/companiesHouse';
 import leadsRouter from './routes/leads';
 import linkedinRouter from './routes/linkedin';
 import enrichmentRouter from './routes/enrichment';
+import heyreachRouter from './routes/heyreach';
 
 const app = express();
 
@@ -23,5 +24,6 @@ app.use('/api', companiesHouseRouter);
 app.use('/api', leadsRouter);
 app.use('/api', linkedinRouter);
 app.use('/api', enrichmentRouter);
+app.use('/api', heyreachRouter);
 
 export default app;

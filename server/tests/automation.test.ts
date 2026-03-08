@@ -65,6 +65,8 @@ const ACTIVE_CAMPAIGN = {
   clientId: 'user-001',
   name: 'Q1 Outreach',
   status: 'Active',
+  channelMix: ['Email'],      // no LinkedIn → Heyreach enrolment skipped
+  channelConfig: null,
   createdAt: new Date(),
 };
 
