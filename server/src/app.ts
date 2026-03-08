@@ -9,6 +9,7 @@ import leadsRouter from './routes/leads';
 import linkedinRouter from './routes/linkedin';
 import enrichmentRouter from './routes/enrichment';
 import heyreachRouter from './routes/heyreach';
+import instantlyRouter from './routes/instantly';
 
 const app = express();
 
@@ -25,5 +26,6 @@ app.use('/api', leadsRouter);
 app.use('/api', linkedinRouter);
 app.use('/api', enrichmentRouter);
 app.use('/api', heyreachRouter);
+app.use('/api', instantlyRouter);
 
 export default app;
