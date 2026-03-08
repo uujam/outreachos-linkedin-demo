@@ -3,11 +3,17 @@ import { prisma } from '../lib/prisma';
 import { requireAuth, AuthRequest } from '../middleware/requireAuth';
 import { getQueues } from '../queues';
 import { checkLeadCap, incrementLeadCount } from '../lib/leadCap';
+import { cancelPendingOutreachJobs } from '../orchestration/channel-sequencer';
 import {
   EnrichmentStage,
   OutreachStage,
   TerminalOutcome,
   LeadSource,
+  MessageDirection,
+  MessageChannel,
+  MessageTool,
+  MessageType,
+  DeliveryStatus,
 } from '@prisma/client';
 
 const router = Router();
@@ -298,6 +304,163 @@ router.delete('/leads/:id', requireAuth, async (req: AuthRequest, res: Response)
 
   await prisma.lead.delete({ where: { id: req.params.id } });
   res.status(204).send();
+});
+
+// ─── GET /api/leads/:id/messages — conversation timeline (B-006b) ─────────────
+
+router.get('/leads/:id/messages', requireAuth, async (req: AuthRequest, res: Response) => {
+  const clientId = req.user!.sub;
+  const leadId = req.params.id;
+
+  const lead = await prisma.lead.findFirst({ where: { id: leadId, clientId } });
+  if (!lead) {
+    res.status(404).json({ error: 'Lead not found' });
+    return;
+  }
+
+  const messages = await prisma.message.findMany({
+    where: { leadId, clientId },
+    orderBy: { timestamp: 'asc' },
+  });
+
+  res.status(200).json({ messages });
+});
+
+// ─── POST /api/leads/:id/messages — add manual note (B-006b) ─────────────────
+
+router.post('/leads/:id/messages', requireAuth, async (req: AuthRequest, res: Response) => {
+  const clientId = req.user!.sub;
+  const leadId = req.params.id;
+
+  const lead = await prisma.lead.findFirst({ where: { id: leadId, clientId } });
+  if (!lead) {
+    res.status(404).json({ error: 'Lead not found' });
+    return;
+  }
+
+  const { body } = req.body as { body?: string };
+  if (!body || !body.trim()) {
+    res.status(400).json({ error: 'body is required' });
+    return;
+  }
+
+  const message = await prisma.message.create({
+    data: {
+      leadId,
+      clientId,
+      direction: MessageDirection.outbound,
+      channel: MessageChannel.note,
+      tool: MessageTool.Manual,
+      messageType: MessageType.note,
+      body,
+      deliveryStatus: DeliveryStatus.sent,
+      timestamp: new Date(),
+    },
+  });
+
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: { lastActivityDate: new Date() },
+  });
+
+  res.status(201).json({ message });
+});
+
+// ─── PATCH /api/leads/:id/dnc — mark lead as Do Not Contact (B-006b) ─────────
+
+router.patch('/leads/:id/dnc', requireAuth, async (req: AuthRequest, res: Response) => {
+  const clientId = req.user!.sub;
+  const leadId = req.params.id;
+
+  const existing = await prisma.lead.findFirst({ where: { id: leadId, clientId } });
+  if (!existing) {
+    res.status(404).json({ error: 'Lead not found' });
+    return;
+  }
+
+  // Cancel any pending outreach jobs for this lead
+  try {
+    await cancelPendingOutreachJobs(leadId);
+  } catch {
+    // Non-fatal — jobs may not exist
+  }
+
+  const lead = await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      dncFlag: true,
+      terminalOutcome: TerminalOutcome.DoNotContact,
+      lastActivityDate: new Date(),
+    },
+  });
+
+  res.status(200).json({ lead });
+});
+
+// ─── PATCH /api/leads/:id/campaign — reassign campaign (B-006b) ──────────────
+
+router.patch('/leads/:id/campaign', requireAuth, async (req: AuthRequest, res: Response) => {
+  const clientId = req.user!.sub;
+  const leadId = req.params.id;
+
+  const existing = await prisma.lead.findFirst({ where: { id: leadId, clientId } });
+  if (!existing) {
+    res.status(404).json({ error: 'Lead not found' });
+    return;
+  }
+
+  const { campaignId } = req.body as { campaignId?: string | null };
+
+  // If assigning a campaign, verify it belongs to this client
+  if (campaignId) {
+    const campaign = await prisma.campaign.findFirst({ where: { id: campaignId, clientId } });
+    if (!campaign) {
+      res.status(404).json({ error: 'Campaign not found' });
+      return;
+    }
+  }
+
+  const lead = await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      assignedCampaignId: campaignId ?? null,
+      lastActivityDate: new Date(),
+    },
+  });
+
+  res.status(200).json({ lead });
+});
+
+// ─── PATCH /api/users/me/discovery-pause — toggle discovery pause (B-006b) ───
+
+router.patch('/users/me/discovery-pause', requireAuth, async (req: AuthRequest, res: Response) => {
+  const clientId = req.user!.sub;
+  const { paused } = req.body as { paused?: boolean };
+
+  if (typeof paused !== 'boolean') {
+    res.status(400).json({ error: 'paused (boolean) is required' });
+    return;
+  }
+
+  await prisma.user.update({
+    where: { id: clientId },
+    data: { discoveryPaused: paused },
+  });
+
+  // If pausing, cancel any queued discovery jobs for this client
+  if (paused) {
+    try {
+      const queues = getQueues();
+      await queues.discovery.removeRepeatable('discover-leads', {
+        pattern: '0 6 * * *',
+        jobId: `discover-${clientId}`,
+      });
+    } catch {
+      // Non-fatal — job may not exist
+    }
+  }
+
+  res.status(200).json({ paused });
 });
 
 export default router;
