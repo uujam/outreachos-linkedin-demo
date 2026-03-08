@@ -11,6 +11,7 @@ import enrichmentRouter from './routes/enrichment';
 import heyreachRouter from './routes/heyreach';
 import instantlyRouter from './routes/instantly';
 import voiceRouter from './routes/voice';
+import dashboardRouter from './routes/dashboard';
 
 const app = express();
 
@@ -29,5 +30,6 @@ app.use('/api', enrichmentRouter);
 app.use('/api', heyreachRouter);
 app.use('/api', instantlyRouter);
 app.use('/api', voiceRouter);
+app.use('/api', dashboardRouter);
 
 export default app;
