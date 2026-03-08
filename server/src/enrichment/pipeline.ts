@@ -7,6 +7,7 @@ import { validateEmail } from './zerobounce';
 import { submitToClayBatch } from './clay';
 import { LeadEnrichmentInput, EnrichmentData } from './types';
 import { enrolLeadIfReady } from '../orchestration/automationTrigger';
+import { getQueues } from '../queues';
 
 const CACHE_TTL_DAYS = 90;
 
@@ -126,6 +127,13 @@ export async function runEnrichmentPipeline(input: LeadEnrichmentInput): Promise
 
   // ── Step 1: Identify (ProxyCurl) ─────────────────────────────────────────
   await prisma.lead.update({ where: { id: leadId }, data: { enrichmentStage: EnrichmentStage.Identified } });
+
+  // Queue fit scoring now that job title and company are known
+  getQueues().scoring.add(
+    `score:${leadId}`,
+    { leadId, clientId },
+    { jobId: `score-${leadId}` }
+  ).catch(() => {});
 
   if (!skipLinkedin && lead.linkedinUrl) {
     const result = await lookupByLinkedinUrl(lead.linkedinUrl);

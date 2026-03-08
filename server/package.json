@@ -12,6 +12,7 @@
     "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
     "@prisma/client": "^5.22.0",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.26.0",

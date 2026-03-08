@@ -41,6 +41,29 @@ export async function triggerAutomationOnIcpSave(clientId: string): Promise<void
       jobId: `discovery-daily-${clientId}`,
     }
   );
+
+  // Re-score all active leads for this client (ICP changed — scores are stale)
+  await rescoreActiveLeads(clientId);
+}
+
+/**
+ * Queue scoring jobs for all active (non-terminal) leads of a client.
+ * Called when ICP settings are updated.
+ */
+export async function rescoreActiveLeads(clientId: string): Promise<void> {
+  const leads = await prisma.lead.findMany({
+    where: { clientId, terminalOutcome: null, dncFlag: false },
+    select: { id: true },
+  });
+
+  const queues = getQueues();
+  for (const lead of leads) {
+    await queues.scoring.add(
+      `score:${lead.id}`,
+      { leadId: lead.id, clientId },
+      { jobId: `score-${lead.id}-rescore-${Date.now()}` }
+    );
+  }
 }
 
 /**

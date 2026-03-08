@@ -26,7 +26,15 @@ jest.mock('../src/lib/redis', () => ({
 
 jest.mock('../src/queues', () => ({
   QUEUE_NAMES: ['enrichment', 'outreach', 'discovery', 'scoring', 'follow-up', 'notifications'],
-  getQueues: jest.fn(), getDlqs: jest.fn(),
+  getQueues: jest.fn(() => ({
+    scoring: { add: jest.fn().mockResolvedValue({}) },
+    enrichment: { add: jest.fn().mockResolvedValue({}) },
+    outreach: { add: jest.fn().mockResolvedValue({}) },
+    discovery: { add: jest.fn().mockResolvedValue({}) },
+    'follow-up': { add: jest.fn().mockResolvedValue({}) },
+    notifications: { add: jest.fn().mockResolvedValue({}) },
+  })),
+  getDlqs: jest.fn(),
   checkQueuesHealth: jest.fn().mockResolvedValue({
     enrichment: true, outreach: true, discovery: true,
     scoring: true, 'follow-up': true, notifications: true,
