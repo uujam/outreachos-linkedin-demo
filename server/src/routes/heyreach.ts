@@ -8,6 +8,7 @@ import { Router, Request, Response } from 'express';
 import crypto from 'crypto';
 import { prisma } from '../lib/prisma';
 import { cancelPendingOutreachJobs } from '../orchestration/channel-sequencer';
+import { queueNotification } from '../lib/notifications';
 import {
   MessageDirection,
   MessageChannel,
@@ -135,6 +136,14 @@ router.post('/heyreach/webhook', async (req: Request, res: Response) => {
     await prisma.lead.update({
       where: { id: lead.id },
       data: { outreachStage: 'Responded', lastActivityDate: eventTimestamp },
+    });
+    // Notify client (F-028)
+    await queueNotification({
+      clientId: lead.clientId,
+      eventType: 'lead_replied',
+      title: 'Lead replied on LinkedIn',
+      body: `${lead.fullName} from ${lead.company ?? 'Unknown'} replied via LinkedIn.`,
+      linkUrl: `/leads/${lead.id}`,
     });
   } else {
     await prisma.lead.update({
