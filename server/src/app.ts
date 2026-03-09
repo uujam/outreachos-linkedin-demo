@@ -1,5 +1,8 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import healthRouter from './routes/health';
 import authRouter from './routes/auth';
 import passwordResetRouter from './routes/passwordReset';
@@ -23,16 +26,66 @@ import onboardingRouter from './routes/onboarding';
 
 const app = express();
 
-// Stripe webhook needs raw body — mount before express.json()
+// ─── Security middleware ──────────────────────────────────────────────────────
+
+// Helmet sets secure HTTP headers
+app.use(helmet());
+
+// CORS: allow only our own app origin in production
+const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:3000').split(',').map(o => o.trim());
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. Stripe webhooks, server-to-server)
+    if (!origin) { callback(null, true); return; }
+    if (allowedOrigins.includes(origin)) { callback(null, true); return; }
+    callback(new Error('CORS: Origin not allowed'));
+  },
+  credentials: true,
+}));
+
+// HTTPS enforcement in production: redirect HTTP to HTTPS
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
+    res.redirect(301, `https://${req.hostname}${req.url}`);
+    return;
+  }
+  next();
+});
+
+// Global rate limit: 200 req/15min per IP (applied before body parsing)
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests — please slow down.' },
+  skip: () => process.env.NODE_ENV === 'test',
+});
+app.use(globalLimiter);
+
+// Stricter limiter for auth endpoints: 10 req/15min per IP
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many auth attempts — please wait before trying again.' },
+  skip: () => process.env.NODE_ENV === 'test',
+});
+
+// ─── Stripe webhook needs raw body — mount before express.json() ─────────────
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(cookieParser());
 
+// ─── Routes ──────────────────────────────────────────────────────────────────
+
+app.use('/api', authLimiter, authRouter);        // auth routes get tighter limit
+app.use('/api', authLimiter, passwordResetRouter);
+
 app.use('/api', healthRouter);
-app.use('/api', authRouter);
-app.use('/api', passwordResetRouter);
 app.use('/api', icpRouter);
 app.use('/api', companiesHouseRouter);
 app.use('/api', leadsRouter);
