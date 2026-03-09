@@ -63,15 +63,7 @@ const globalLimiter = rateLimit({
 });
 app.use(globalLimiter);
 
-// Stricter limiter for auth endpoints: 10 req/15min per IP
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many auth attempts — please wait before trying again.' },
-  skip: () => process.env.NODE_ENV === 'test',
-});
+// Note: auth-specific rate limiting is applied per-route in auth.ts and passwordReset.ts
 
 // ─── Stripe webhook needs raw body — mount before express.json() ─────────────
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
@@ -82,8 +74,8 @@ app.use(cookieParser());
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
-app.use('/api', authLimiter, authRouter);        // auth routes get tighter limit
-app.use('/api', authLimiter, passwordResetRouter);
+app.use('/api', authRouter);
+app.use('/api', passwordResetRouter);
 
 app.use('/api', healthRouter);
 app.use('/api', icpRouter);
