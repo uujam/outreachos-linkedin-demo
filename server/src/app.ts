@@ -13,6 +13,7 @@ import instantlyRouter from './routes/instantly';
 import voiceRouter from './routes/voice';
 import dashboardRouter from './routes/dashboard';
 import eventsRouter from './routes/events';
+import notificationsRouter from './routes/notifications';
 
 const app = express();
 
@@ -33,5 +34,6 @@ app.use('/api', instantlyRouter);
 app.use('/api', voiceRouter);
 app.use('/api', dashboardRouter);
 app.use('/api', eventsRouter);
+app.use('/api', notificationsRouter);
 
 export default app;

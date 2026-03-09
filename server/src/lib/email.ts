@@ -1,5 +1,25 @@
 import nodemailer from 'nodemailer';
 
+// ─── Notification email constants (F-028) ────────────────────────────────────
+
+/** Event types that also trigger a transactional email (others are in-app only) */
+export const HIGH_PRIORITY_EVENTS = [
+  'meeting_booked',
+  'lead_replied',
+  'payment_failed',
+  'cap_80_percent',
+  'calendly_disconnected',
+] as const;
+
+export interface NotificationEmailParams {
+  to: string;
+  name: string;
+  eventType: string;
+  title: string;
+  body: string;
+  linkUrl?: string;
+}
+
 function createTransport() {
   // In production, use Postmark SMTP or SendGrid
   // In test/dev, use Ethereal (nodemailer test account) or a null transport
@@ -15,6 +35,32 @@ function createTransport() {
       user: process.env.EMAIL_SMTP_USER,
       pass: process.env.EMAIL_SMTP_PASS,
     },
+  });
+}
+
+/**
+ * Send a transactional notification email via SMTP (Postmark or SendGrid SMTP relay).
+ * Uses the same nodemailer transport as password reset — kept separate from Instantly.
+ * Throws on failure so the caller can log and decide handling.
+ */
+export async function sendNotificationEmail(params: NotificationEmailParams): Promise<void> {
+  const transport = createTransport();
+  const dashboardBase = process.env.DASHBOARD_URL ?? 'https://app.outreachos.com';
+  const ctaUrl = params.linkUrl ? `${dashboardBase}${params.linkUrl}` : dashboardBase;
+
+  await transport.sendMail({
+    from: process.env.EMAIL_FROM ?? 'OutreachOS <notifications@outreachos.com>',
+    to: params.to,
+    subject: params.title,
+    text: [
+      `Hi ${params.name},`,
+      '',
+      params.body,
+      '',
+      `View in dashboard: ${ctaUrl}`,
+      '',
+      '— OutreachOS',
+    ].join('\n'),
   });
 }
 
