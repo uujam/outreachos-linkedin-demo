@@ -14,6 +14,7 @@ import voiceRouter from './routes/voice';
 import dashboardRouter from './routes/dashboard';
 import eventsRouter from './routes/events';
 import notificationsRouter from './routes/notifications';
+import meetingsRouter from './routes/meetings';
 
 const app = express();
 
@@ -35,5 +36,6 @@ app.use('/api', voiceRouter);
 app.use('/api', dashboardRouter);
 app.use('/api', eventsRouter);
 app.use('/api', notificationsRouter);
+app.use('/api', meetingsRouter);
 
 export default app;
