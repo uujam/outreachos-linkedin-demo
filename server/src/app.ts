@@ -18,8 +18,12 @@ import meetingsRouter from './routes/meetings';
 import integrationsRouter from './routes/integrations';
 import reportsRouter from './routes/reports';
 import adminRouter from './routes/admin';
+import stripeRouter from './routes/stripe';
 
 const app = express();
+
+// Stripe webhook needs raw body — mount before express.json()
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -43,5 +47,6 @@ app.use('/api', meetingsRouter);
 app.use('/api', integrationsRouter);
 app.use('/api', reportsRouter);
 app.use('/api', adminRouter);
+app.use('/api', stripeRouter);
 
 export default app;

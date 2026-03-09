@@ -1512,7 +1512,7 @@
             <li class="dim">Dedicated strategist</li>
             <li class="dim">CRM integration</li>
           </ul>
-          <a href="#" class="pricing-cta outline" data-modal>Get Started →</a>
+          <a href="#" class="pricing-cta outline" data-plan="starter">Get Started →</a>
         </div>
 
         <!-- Growth -->
@@ -1536,7 +1536,7 @@
             <li>HubSpot / Salesforce sync</li>
             <li>Weekly performance reporting</li>
           </ul>
-          <a href="#" class="pricing-cta primary" data-modal>Book a Demo →</a>
+          <a href="#" class="pricing-cta primary" data-plan="growth">Book a Demo →</a>
         </div>
 
         <!-- Enterprise -->
@@ -1938,6 +1938,29 @@
     // Wire all pricing CTAs and hero CTA to modal
     document.querySelectorAll('[data-modal]').forEach(el => {
       el.addEventListener('click', e => { e.preventDefault(); showModal(); });
+    });
+
+    // Wire pricing plan CTAs to Stripe checkout
+    document.querySelectorAll('[data-plan="starter"], [data-plan="growth"]').forEach(el => {
+      el.addEventListener('click', async e => {
+        e.preventDefault();
+        const plan = el.getAttribute('data-plan');
+        const billing = document.getElementById('pricingGrid')?.closest('section')
+          ?.querySelector('.toggle-btn.active')?.getAttribute('data-plan') === 'annual'
+          ? 'annual' : 'monthly';
+        try {
+          const resp = await fetch('/api/stripe/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ plan, billing }),
+          });
+          if (resp.ok) {
+            const { url } = await resp.json();
+            if (url) { window.location.href = url; return; }
+          }
+        } catch (_) { /* fall through to modal */ }
+        showModal();
+      });
     });
 
     demoForm.addEventListener('submit', e => {

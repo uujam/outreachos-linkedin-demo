@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment Successful — OutreachOS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garant:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0e0c09;
+      --cream: #f5f0e8;
+      --gold: #c9a84c;
+      --muted: #6b6460;
+      --muted-lt: #9b9390;
+    }
+    body {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+    }
+    .card {
+      max-width: 480px;
+      width: 100%;
+    }
+    .icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(201, 168, 76, 0.12);
+      border: 1px solid rgba(201, 168, 76, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 2rem;
+      font-size: 2rem;
+    }
+    h1 {
+      font-family: 'Cormorant Garant', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400;
+      margin-bottom: 1rem;
+    }
+    h1 em { font-style: italic; color: var(--gold); }
+    p {
+      font-size: 0.9rem;
+      color: var(--muted-lt);
+      line-height: 1.75;
+      margin-bottom: 2rem;
+    }
+    .btn {
+      display: inline-block;
+      padding: 0.75rem 2rem;
+      background: var(--gold);
+      color: var(--bg);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      border-radius: 2px;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">✓</div>
+    <h1>You're <em>in.</em></h1>
+    <p>
+      Your subscription is now active. We're setting up your account and
+      you'll receive a welcome email shortly with next steps.
+    </p>
+    <a href="/dashboard.html" class="btn">Go to your dashboard →</a>
+  </div>
+</body>
+</html>
