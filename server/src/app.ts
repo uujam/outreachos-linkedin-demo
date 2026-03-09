@@ -15,6 +15,7 @@ import dashboardRouter from './routes/dashboard';
 import eventsRouter from './routes/events';
 import notificationsRouter from './routes/notifications';
 import meetingsRouter from './routes/meetings';
+import integrationsRouter from './routes/integrations';
 
 const app = express();
 
@@ -37,5 +38,6 @@ app.use('/api', dashboardRouter);
 app.use('/api', eventsRouter);
 app.use('/api', notificationsRouter);
 app.use('/api', meetingsRouter);
+app.use('/api', integrationsRouter);
 
 export default app;
