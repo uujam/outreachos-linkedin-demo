@@ -63,6 +63,36 @@ router.get('/admin/clients/:id', requireAdmin, async (req: AuthRequest, res: Res
   res.status(200).json({ client });
 });
 
+// ─── PATCH /api/admin/clients/:id/cap-override ───────────────────────────────
+
+router.patch('/admin/clients/:id/cap-override', requireAdmin, async (req: AuthRequest, res: Response) => {
+  const clientId = req.params.id;
+  const { capOverride } = req.body as { capOverride?: number | null };
+
+  // null = remove override (revert to plan default)
+  if (capOverride !== null && capOverride !== undefined && (typeof capOverride !== 'number' || capOverride < 0)) {
+    res.status(400).json({ error: 'capOverride must be a non-negative integer or null' });
+    return;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: clientId },
+    select: { id: true, role: true },
+  });
+
+  if (!user || user.role !== 'client') {
+    res.status(404).json({ error: 'Client not found' });
+    return;
+  }
+
+  await prisma.user.update({
+    where: { id: clientId },
+    data: { customLeadCapOverride: capOverride ?? null },
+  });
+
+  res.status(200).json({ ok: true, clientId, capOverride: capOverride ?? null });
+});
+
 // ─── GET /api/admin/clients/:id/api-costs ────────────────────────────────────
 
 router.get('/admin/clients/:id/api-costs', requireAdmin, async (req: AuthRequest, res: Response) => {

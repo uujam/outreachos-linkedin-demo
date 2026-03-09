@@ -52,3 +52,10 @@ export async function incrementLeadCount(clientId: string): Promise<void> {
     data: { leadsUsedThisPeriod: { increment: 1 } },
   });
 }
+
+export async function resetLeadCap(clientId: string): Promise<void> {
+  await prisma.subscription.update({
+    where: { clientId },
+    data: { leadsUsedThisPeriod: 0 },
+  });
+}
