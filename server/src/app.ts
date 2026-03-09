@@ -17,6 +17,7 @@ import notificationsRouter from './routes/notifications';
 import meetingsRouter from './routes/meetings';
 import integrationsRouter from './routes/integrations';
 import reportsRouter from './routes/reports';
+import adminRouter from './routes/admin';
 
 const app = express();
 
@@ -41,5 +42,6 @@ app.use('/api', notificationsRouter);
 app.use('/api', meetingsRouter);
 app.use('/api', integrationsRouter);
 app.use('/api', reportsRouter);
+app.use('/api', adminRouter);
 
 export default app;
