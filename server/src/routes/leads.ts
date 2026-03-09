@@ -88,6 +88,27 @@ router.post('/leads', requireAuth, async (req: AuthRequest, res: Response) => {
 
   await incrementLeadCount(clientId);
 
+  // Queue 80% cap warning notification
+  try {
+    const afterStatus = await checkLeadCap(clientId);
+    if (afterStatus.cap !== null && afterStatus.percentUsed !== null && afterStatus.percentUsed >= 80) {
+      const queues = getQueues();
+      await queues.notifications.add(
+        'send-notification',
+        {
+          clientId,
+          eventType: 'cap_80_percent',
+          title: 'Lead cap warning',
+          message: `You have used ${afterStatus.percentUsed}% of your monthly lead allowance (${afterStatus.used}/${afterStatus.cap}).`,
+          priority: 'high',
+        },
+        { attempts: 3 }
+      );
+    }
+  } catch {
+    // Non-fatal
+  }
+
   // Queue enrichment job, skipping steps for fields already provided
   try {
     const queues = getQueues();
