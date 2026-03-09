@@ -9,11 +9,14 @@
  * Checkout cancel  lands on /checkout/cancel
  */
 import { Router, Request, Response } from 'express';
+import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 import Stripe from 'stripe';
 import { requireAuth, AuthRequest } from '../middleware/requireAuth';
 import { prisma } from '../lib/prisma';
 import { getStripe, STRIPE_PRICES, STRIPE_PRICES_ANNUAL } from '../lib/stripe';
 import { getQueues } from '../queues';
+import { sendPasswordResetEmail } from '../lib/email';
 
 const router = Router();
 
@@ -23,13 +26,24 @@ const PLAN_NAMES: Record<string, 'Starter' | 'Growth' | 'Enterprise'> = {
 };
 
 // ─── POST /api/stripe/checkout ────────────────────────────────────────────────
+// Public — no auth required. Accepts prospect details; account is created after
+// payment succeeds via the checkout.session.completed webhook.
 
-router.post('/stripe/checkout', requireAuth, async (req: AuthRequest, res: Response) => {
-  const clientId = req.user!.sub;
-  const { plan, billing = 'monthly' } = req.body as { plan?: string; billing?: 'monthly' | 'annual' };
+router.post('/stripe/checkout', async (req: Request, res: Response) => {
+  const { plan, billing = 'monthly', email, name, companyName } = req.body as {
+    plan?: string;
+    billing?: 'monthly' | 'annual';
+    email?: string;
+    name?: string;
+    companyName?: string;
+  };
 
   if (!plan || !PLAN_NAMES[plan]) {
     res.status(400).json({ error: 'plan must be one of: starter, growth' });
+    return;
+  }
+  if (!email || !name || !companyName) {
+    res.status(400).json({ error: 'email, name, and companyName are required' });
     return;
   }
 
@@ -44,21 +58,16 @@ router.post('/stripe/checkout', requireAuth, async (req: AuthRequest, res: Respo
 
   const stripe = getStripe();
 
-  const user = await prisma.user.findUnique({ where: { id: clientId }, select: { email: true, name: true } });
-  if (!user) {
-    res.status(404).json({ error: 'User not found' });
-    return;
-  }
-
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
-    customer_email: user.email,
-    metadata: { clientId, plan, billing },
+    customer_email: email,
+    // Store prospect details in metadata so the webhook can create the account
+    metadata: { plan, billing, email, name, companyName },
     success_url: `${process.env.APP_URL ?? 'http://localhost:3000'}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.APP_URL ?? 'http://localhost:3000'}/checkout/cancel`,
     subscription_data: {
-      metadata: { clientId, plan, billing },
+      metadata: { plan, billing, email, name, companyName },
     },
   });
 
@@ -145,22 +154,34 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
-  const clientId = session.metadata?.clientId;
   const plan = session.metadata?.plan;
+  const email = session.metadata?.email;
+  const name = session.metadata?.name;
+  const companyName = session.metadata?.companyName;
 
-  if (!clientId || !plan) return;
+  if (!plan || !email || !name || !companyName) return;
 
   const planName = PLAN_NAMES[plan] ?? 'Starter';
   const customerId = session.customer as string;
   const subscriptionId = session.subscription as string;
-
   const now = new Date();
   const periodEnd = new Date(now.getTime() + 30 * 86400_000);
 
+  // Create the user account if it doesn't already exist (idempotent)
+  const randomPassword = crypto.randomBytes(24).toString('hex');
+  const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+  const user = await prisma.user.upsert({
+    where: { email },
+    create: { email, name, companyName, hashedPassword, role: 'client' },
+    update: {}, // never overwrite an existing account's details
+  });
+
+  // Create / update the subscription record
   await prisma.subscription.upsert({
-    where: { clientId },
+    where: { clientId: user.id },
     create: {
-      clientId,
+      clientId: user.id,
       planName,
       status: 'active',
       stripeCustomerId: customerId,
@@ -179,16 +200,37 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
     },
   });
 
-  // Queue welcome email notification
+  // Generate a "set your password" token valid for 24 hours
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+  await prisma.passwordResetToken.create({
+    data: {
+      clientId: user.id,
+      tokenHash,
+      expiresAt: new Date(Date.now() + 24 * 3600_000),
+    },
+  });
+
+  const appUrl = process.env.APP_URL ?? 'http://localhost:4000';
+  const setPasswordUrl = `${appUrl}/reset-password?token=${rawToken}`;
+
+  // Send welcome + set-password email (non-fatal if SMTP not configured)
+  try {
+    await sendPasswordResetEmail(email, setPasswordUrl);
+  } catch (err) {
+    console.error('[Checkout] Failed to send welcome email:', err);
+  }
+
+  // Also queue an in-app welcome notification
   try {
     const queues = getQueues();
     await queues.notifications.add(
       'send-notification',
       {
-        clientId,
+        clientId: user.id,
         eventType: 'welcome',
         title: 'Welcome to OutreachOS',
-        message: `Your ${planName} plan is now active. Let's get started.`,
+        message: `Your ${planName} plan is now active. Check your email to set your password.`,
         priority: 'high',
       },
       { attempts: 3 }

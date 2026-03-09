@@ -1,7 +1,7 @@
 /**
  * B-014/B-015/B-016/B-017 — Stripe checkout, webhook, billing portal tests.
- * Covers: POST /stripe/checkout, GET /stripe/portal,
- * POST /stripe/webhook (all 5 event types), auth enforcement.
+ * Covers: POST /stripe/checkout (public, collects prospect details),
+ * GET /stripe/portal, POST /stripe/webhook (all 5 event types).
  */
 import request from 'supertest';
 import app from '../src/app';
@@ -29,7 +29,11 @@ jest.mock('../src/queues', () => ({
 
 jest.mock('../src/lib/prisma', () => ({
   prisma: {
-    user: { findUnique: jest.fn(), update: jest.fn().mockResolvedValue({}) },
+    user: {
+      findUnique: jest.fn(),
+      upsert: jest.fn().mockResolvedValue({ id: 'user-001', email: 'jane@acme.com' }),
+      update: jest.fn().mockResolvedValue({}),
+    },
     lead: { findFirst: jest.fn(), update: jest.fn().mockResolvedValue({}) },
     subscription: {
       findUnique: jest.fn(),
@@ -37,9 +41,8 @@ jest.mock('../src/lib/prisma', () => ({
       upsert: jest.fn().mockResolvedValue({}),
       updateMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
-    invoice: {
-      upsert: jest.fn().mockResolvedValue({}),
-    },
+    invoice: { upsert: jest.fn().mockResolvedValue({}) },
+    passwordResetToken: { create: jest.fn().mockResolvedValue({}) },
     $queryRaw: jest.fn(),
   },
   checkDatabaseHealth: jest.fn().mockResolvedValue(true),
@@ -62,6 +65,17 @@ jest.mock('../src/orchestration/channel-sequencer', () => ({
   scheduleChannelSteps: jest.fn().mockResolvedValue(undefined),
 }));
 
+jest.mock('../src/lib/email', () => ({
+  sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),
+  sendNotificationEmail: jest.fn().mockResolvedValue(undefined),
+  HIGH_PRIORITY_EVENTS: ['meeting_booked', 'lead_replied', 'payment_failed', 'cap_80_percent', 'calendly_disconnected'],
+}));
+
+jest.mock('bcrypt', () => ({
+  hash: jest.fn().mockResolvedValue('hashed-password'),
+  compare: jest.fn().mockResolvedValue(true),
+}));
+
 // Mock Stripe SDK
 const mockCheckoutCreate = jest.fn().mockResolvedValue({ url: 'https://checkout.stripe.com/pay/cs_test_123' });
 const mockPortalCreate = jest.fn().mockResolvedValue({ url: 'https://billing.stripe.com/session/bps_123' });
@@ -78,39 +92,44 @@ jest.mock('../src/lib/stripe', () => ({
 }));
 
 import { prisma } from '../src/lib/prisma';
+import { sendPasswordResetEmail } from '../src/lib/email';
 
 const mockSubFindUnique = prisma.subscription.findUnique as jest.MockedFunction<typeof prisma.subscription.findUnique>;
 const mockSubFindFirst = prisma.subscription.findFirst as jest.MockedFunction<typeof prisma.subscription.findFirst>;
 const mockSubUpsert = prisma.subscription.upsert as jest.MockedFunction<typeof prisma.subscription.upsert>;
 const mockSubUpdateMany = prisma.subscription.updateMany as jest.MockedFunction<typeof prisma.subscription.updateMany>;
 const mockInvoiceUpsert = prisma.invoice.upsert as jest.MockedFunction<typeof prisma.invoice.upsert>;
-const mockUserFindUnique = prisma.user.findUnique as jest.MockedFunction<typeof prisma.user.findUnique>;
+const mockUserUpsert = prisma.user.upsert as jest.MockedFunction<typeof prisma.user.upsert>;
+const mockSendPasswordResetEmail = sendPasswordResetEmail as jest.MockedFunction<typeof sendPasswordResetEmail>;
 
 process.env.JWT_SECRET = 'test-secret-stripe';
 process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
 
 const clientToken = `Bearer ${signToken({ sub: 'user-001', role: 'client' })}`;
 
+const VALID_PROSPECT = { plan: 'starter', billing: 'monthly', email: 'jane@acme.com', name: 'Jane Smith', companyName: 'ACME Ltd' };
+
 beforeEach(() => {
   jest.clearAllMocks();
-  mockUserFindUnique.mockResolvedValue({ id: 'user-001', email: 'jane@acme.com', name: 'Jane' } as never);
+  mockUserUpsert.mockResolvedValue({ id: 'user-001', email: 'jane@acme.com' } as never);
 });
 
-// ─── POST /api/stripe/checkout ────────────────────────────────────────────────
+// ─── POST /api/stripe/checkout (public) ───────────────────────────────────────
 
 describe('POST /api/stripe/checkout', () => {
-  it('creates a checkout session and returns redirect URL', async () => {
+  it('creates a checkout session for a new prospect (no auth required)', async () => {
     const res = await request(app)
       .post('/api/stripe/checkout')
-      .set('Authorization', clientToken)
-      .send({ plan: 'starter', billing: 'monthly' });
+      .send(VALID_PROSPECT);
 
     expect(res.status).toBe(200);
     expect(res.body.url).toContain('checkout.stripe.com');
     expect(mockCheckoutCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         mode: 'subscription',
+        customer_email: 'jane@acme.com',
         line_items: [{ price: 'price_starter_monthly', quantity: 1 }],
+        metadata: expect.objectContaining({ email: 'jane@acme.com', name: 'Jane Smith', companyName: 'ACME Ltd' }),
       })
     );
   });
@@ -118,41 +137,45 @@ describe('POST /api/stripe/checkout', () => {
   it('uses annual price when billing=annual', async () => {
     const res = await request(app)
       .post('/api/stripe/checkout')
-      .set('Authorization', clientToken)
-      .send({ plan: 'growth', billing: 'annual' });
+      .send({ ...VALID_PROSPECT, plan: 'growth', billing: 'annual' });
 
     expect(res.status).toBe(200);
     expect(mockCheckoutCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        line_items: [{ price: 'price_growth_annual', quantity: 1 }],
-      })
+      expect.objectContaining({ line_items: [{ price: 'price_growth_annual', quantity: 1 }] })
     );
   });
 
   it('returns 400 for unknown plan', async () => {
     const res = await request(app)
       .post('/api/stripe/checkout')
-      .set('Authorization', clientToken)
-      .send({ plan: 'enterprise' });
-
+      .send({ ...VALID_PROSPECT, plan: 'enterprise' });
     expect(res.status).toBe(400);
   });
 
-  it('returns 400 when plan is missing', async () => {
-    const res = await request(app)
-      .post('/api/stripe/checkout')
-      .set('Authorization', clientToken)
-      .send({});
-
+  it('returns 400 when email is missing', async () => {
+    const { email: _e, ...body } = VALID_PROSPECT;
+    const res = await request(app).post('/api/stripe/checkout').send(body);
     expect(res.status).toBe(400);
   });
 
-  it('returns 401 without auth', async () => {
+  it('returns 400 when name is missing', async () => {
+    const { name: _n, ...body } = VALID_PROSPECT;
+    const res = await request(app).post('/api/stripe/checkout').send(body);
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when companyName is missing', async () => {
+    const { companyName: _c, ...body } = VALID_PROSPECT;
+    const res = await request(app).post('/api/stripe/checkout').send(body);
+    expect(res.status).toBe(400);
+  });
+
+  it('does NOT require an auth token', async () => {
+    // No Authorization header — should still succeed
     const res = await request(app)
       .post('/api/stripe/checkout')
-      .send({ plan: 'starter' });
-
-    expect(res.status).toBe(401);
+      .send(VALID_PROSPECT);
+    expect(res.status).toBe(200);
   });
 });
 
@@ -175,11 +198,7 @@ describe('GET /api/stripe/portal', () => {
 
   it('returns 404 when no subscription exists', async () => {
     mockSubFindUnique.mockResolvedValue(null as never);
-
-    const res = await request(app)
-      .get('/api/stripe/portal')
-      .set('Authorization', clientToken);
-
+    const res = await request(app).get('/api/stripe/portal').set('Authorization', clientToken);
     expect(res.status).toBe(404);
   });
 
@@ -197,9 +216,7 @@ function makeWebhookBody(event: object): Buffer {
 
 describe('POST /api/stripe/webhook', () => {
   it('returns 400 when signature verification fails', async () => {
-    mockConstructEvent.mockImplementation(() => {
-      throw new Error('Invalid signature');
-    });
+    mockConstructEvent.mockImplementation(() => { throw new Error('Invalid signature'); });
 
     const res = await request(app)
       .post('/api/stripe/webhook')
@@ -210,14 +227,14 @@ describe('POST /api/stripe/webhook', () => {
     expect(res.status).toBe(400);
   });
 
-  it('handles checkout.session.completed — upserts subscription', async () => {
+  it('handles checkout.session.completed — creates user account and subscription', async () => {
     const event = {
       type: 'checkout.session.completed',
       data: {
         object: {
           customer: 'cus_123',
           subscription: 'sub_123',
-          metadata: { clientId: 'user-001', plan: 'starter', billing: 'monthly' },
+          metadata: { plan: 'starter', billing: 'monthly', email: 'jane@acme.com', name: 'Jane Smith', companyName: 'ACME Ltd' },
         },
       },
     };
@@ -230,12 +247,19 @@ describe('POST /api/stripe/webhook', () => {
       .send(makeWebhookBody(event));
 
     expect(res.status).toBe(200);
+    // Creates or finds the user
+    expect(mockUserUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { email: 'jane@acme.com' } })
+    );
+    // Creates/updates subscription
     expect(mockSubUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
         create: expect.objectContaining({ planName: 'Starter', status: 'active' }),
-        update: expect.objectContaining({ planName: 'Starter', status: 'active' }),
       })
     );
+    // Sends set-password email
+    expect(mockSendPasswordResetEmail).toHaveBeenCalledWith('jane@acme.com', expect.stringContaining('reset-password'));
+    // Queues welcome notification
     expect(mockNotificationsAdd).toHaveBeenCalledWith(
       'send-notification',
       expect.objectContaining({ eventType: 'welcome' }),
@@ -272,9 +296,7 @@ describe('POST /api/stripe/webhook', () => {
       expect.objectContaining({ data: expect.objectContaining({ status: 'active', leadsUsedThisPeriod: 0 }) })
     );
     expect(mockInvoiceUpsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        create: expect.objectContaining({ amount: 149700, status: 'paid' }),
-      })
+      expect.objectContaining({ create: expect.objectContaining({ amount: 149700, status: 'paid' }) })
     );
   });
 
@@ -343,14 +365,13 @@ describe('POST /api/stripe/webhook', () => {
   });
 
   it('returns 200 for unhandled event types', async () => {
-    const event = { type: 'unknown.event', data: { object: {} } };
-    mockConstructEvent.mockReturnValue(event);
+    mockConstructEvent.mockReturnValue({ type: 'unknown.event', data: { object: {} } });
 
     const res = await request(app)
       .post('/api/stripe/webhook')
       .set('Content-Type', 'application/json')
       .set('stripe-signature', 'valid')
-      .send(makeWebhookBody(event));
+      .send(makeWebhookBody({ type: 'unknown.event' }));
 
     expect(res.status).toBe(200);
     expect(res.body.received).toBe(true);

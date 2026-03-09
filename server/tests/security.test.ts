@@ -76,11 +76,12 @@ describe('CORS', () => {
   });
 
   it('includes CORS header for allowed origin', async () => {
-    process.env.ALLOWED_ORIGINS = 'http://localhost:3000';
+    // Use whatever origin is configured at startup (reads ALLOWED_ORIGINS env var)
+    const allowedOrigin = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:4000').split(',')[0].trim();
     const res = await request(app)
       .get('/api/health')
-      .set('Origin', 'http://localhost:3000');
-    expect(res.headers['access-control-allow-origin']).toBe('http://localhost:3000');
+      .set('Origin', allowedOrigin);
+    expect(res.headers['access-control-allow-origin']).toBe(allowedOrigin);
   });
 
   it('blocks requests from disallowed origins', async () => {
