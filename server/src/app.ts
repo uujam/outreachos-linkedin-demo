@@ -19,6 +19,7 @@ import integrationsRouter from './routes/integrations';
 import reportsRouter from './routes/reports';
 import adminRouter from './routes/admin';
 import stripeRouter from './routes/stripe';
+import onboardingRouter from './routes/onboarding';
 
 const app = express();
 
@@ -48,5 +49,6 @@ app.use('/api', integrationsRouter);
 app.use('/api', reportsRouter);
 app.use('/api', adminRouter);
 app.use('/api', stripeRouter);
+app.use('/api', onboardingRouter);
 
 export default app;
