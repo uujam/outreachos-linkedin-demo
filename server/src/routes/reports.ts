@@ -162,7 +162,7 @@ async function buildReportData(type: ReportType, clientId: string): Promise<unkn
 
 function escapeCell(val: unknown): string {
   if (val === null || val === undefined) return '';
-  const s = String(val);
+  const s = typeof val === 'object' ? JSON.stringify(val) : String(val);
   return s.includes(',') || s.includes('"') || s.includes('\n')
     ? `"${s.replace(/"/g, '""')}"`
     : s;
